@@ -1,42 +1,43 @@
-# Density of States Prediction of Crystalline Materials via Prompt-based Multi-Modal Transformer
+# Implicit Precursor Extraction with Expert Retriever for Inorganic Retrosynthesis
 
-The offical source code for Density of States Prediction of Crystalline Materials via Prompt-based Multi-Modal Transformer
+The offical source code for Implicit Precursor Extraction with Expert Retriever for Inorganic Retrosynthesis
  
 ### Overview
-The density of states (DOS) is a spectral property of crystalline materials, which provides fundamental insights into various characteristics of the materials. While previous works mainly focus on obtaining high-quality representations of crystalline materials for DOS prediction, we focus on predicting the DOS from the obtained representations by reflecting the nature of DOS: DOS determines the general distribution of states as a function of energy. That is, DOS is not solely determined by the crystalline material but also by the energy levels, which has been neglected in previous works. In this paper, we propose to integrate heterogeneous information obtained from the crystalline materials and the energies via a multimodal transformer, thereby modeling the complex relationships between the atoms in the crystalline materials and various energy levels for DOS prediction. Moreover, we propose to utilize prompts to guide the model to learn the crystal structural system-specific interactions between crystalline materials and energies. Extensive experiments on two types of DOS, i.e., Phonon DOS and Electron DOS, with various real-world scenarios demonstrate the superiority of DOSTransformer.
+While inorganic retrosynthesis planning is essential in the field of chemical science, the application of machine learning in this area has been notably less explored compared to organic retrosynthesis planning. In this paper, we propose RetroPLEX for inorganic Retrosynthesis planning, which imPLicitly EXtracts the precursor information of reference materials that are retrieved from the knowledge base regarding domain expertise in the field. Specifically, instead of directly employing the precursor information of reference materials, we propose implicitly extracting it with various attention layers, which enables the model to learn novel synthesis recipes more effectively. Moreover, during retrieval, we consider the thermodynamic relationship between target material and precursors, which is essential domain expertise in identifying the most probable precursor set among various options. Extensive experiments demonstrate the superiority of RetroPLEX in
+retrosynthesis planning, especially in discovering novel synthesis recipes, which is crucial for materials discovery.
 
-### Phonon DOS Prediction
+### RetroPLEX
 #### Dataset
-You can dowload phonon dataset in this [repository](https://github.com/ninarina12/phononDoS_tutorial)  
+You can dowload year split dataset in this drive [link](https://drive.google.com/drive/folders/1hDCVjT50au_f5fVeZxF_4U2nF6GmhO74?usp=sharing)
+After download dataset, you can put datasets into dataset folder  
+(We upload our dataset into drive link due to file size)
 
 #### Run model
-Run `main_phDOS.py` for phonon DOS Prediction after downloading phonon DOS dataset into `data/processed`
-
-### Electron DOS Prediction
-#### Dataset
-We build Electron DOS dataset consists of the materials and its electron DOS information which are collected from [Materials Proejct](https://materialsproject.org/)  
-We converted raw files to `pkl` and made electronic DOS dataset by `mat2graph.py`  
-
-#### Run model
-Run `main_eDOS.py` for electron DOS Prediction after building electron DOS dataset.   
+Run `main_RetroPLEX.py` for training our RetroPLEX
 
 ### Models
-#### embedder eDOS
-`DOSTransformer.py`: Our proposed model: DOSTransformer for Electron DOS
+#### RetroPLEX
+`RetroPLEX.py`: Our proposed model: RetroPLEX
 
-#### embedder phDOS
-`DOSTransformer_phonon.py`: Our proposed model: DOSTransformer for Phonon DOS  
 
+### Others
+#### MPC
+`MPC.py`: MPC Retriever
+`train_mpc.py`: For training MPC Retriever
+`utils_mpc.py`: utils for MPC Retriever training
+
+#### GraphNetwork
+`GraphNetwork.py`: Formation Energy predictor GraphNetwork & GraphNetwork backbone
+`train_mpc.py`: For training NRE Retriever (Formation Energy predictor) training
+`utils_nre.py`: utils for NRE Retriever (Formation Energy predictor) training
 
 ### Hyperparameters  
 
-`--beta:` Hyperparameter for training loss controlling system_rmse (Balancing Term for Training)
+`--layers:` Number of GNN layers in RetroPLEX model  
 
-`--layers:` Number of GNN layers in DOSTransformer model  
+`--t_layers:` Number of cross-attention layers in RetroPLEX model  
 
-`--attn_drop:` Dropout ratio of attention weights
-
-`--transformer:` Number of Transformer layer in DOSTransformer   
+`--t_layers:` Number of self-attention layers in RetroPLEX model  
 
 `--embedder:` Selecting embedder   
 
@@ -46,8 +47,8 @@ Run `main_eDOS.py` for electron DOS Prediction after building electron DOS datas
 
 `--lr:` Learning rate for training the model  
 
-`--dataset:` Selecting dataset for eDOS prediction (Random split, Crystal OOD, Element OOD, default dataset is Random split)
-
 `--es:` Early Stopping Criteria  
 
 `--eval:` Evaluation Step  
+
+`--K:` Number of retrieved materials
