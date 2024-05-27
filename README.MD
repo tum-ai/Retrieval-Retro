@@ -8,7 +8,7 @@ retrosynthesis planning, especially in discovering novel synthesis recipes, whic
 
 ### RetroPLEX
 #### Dataset
-You can dowload year split dataset in this drive [link](https://drive.google.com/drive/folders/1hDCVjT50au_f5fVeZxF_4U2nF6GmhO74?usp=sharing)
+You can dowload year split dataset in this drive [link](https://drive.google.com/drive/folders/1hDCVjT50au_f5fVeZxF_4U2nF6GmhO74?usp=sharing)  
 After download dataset, you can put datasets into dataset folder  
 (We upload our dataset into drive link due to file size)
 
