@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch_scatter import scatter_sum
 
-# GCN, GIN, GAT 가능
+# GCN, GIN, GAT
 
 class GraphNetwork(nn.Module):
     def __init__(self, layers, n_atom_feats, n_bond_feats, n_hidden, device):
