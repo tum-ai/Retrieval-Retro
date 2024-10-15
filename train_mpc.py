@@ -37,24 +37,16 @@ def main():
     print(f'configuration: {configuration}')
 
     # GPU setting
-    args.device = 7
-    args.eval = 1
     args.embedder = 'mpc'
-
 
     device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu')
     torch.cuda.set_device(device)
     print(device)
     seed_everything(seed=args.seed)
 
-    if args.split == "year":
-        train_dataset = torch.load('./dataset/year/year_train_mpc.pt',map_location=device)
-        valid_dataset = torch.load('./dataset/year/year_valid_mpc.pt',map_location=device)
-        test_dataset = torch.load('./dataset/year/year_test_mpc.pt',map_location=device)
-
-    else:
-        print('Wrong Dataset split')
-
+    train_dataset = torch.load('./dataset/year/year_train_mpc.pt',map_location=device)
+    valid_dataset = torch.load('./dataset/year/year_valid_mpc.pt',map_location=device)
+    test_dataset = torch.load('./dataset/year/year_test_mpc.pt',map_location=device)
 
     train_loader = DataLoader(train_dataset, batch_size = args.batch_size, shuffle=True) 
     valid_loader = DataLoader(valid_dataset, batch_size = 1)

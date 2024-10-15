@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch_scatter import scatter_sum
 
-# GCN, GIN, GAT
+
 
 class GraphNetwork(nn.Module):
     def __init__(self, layers, n_atom_feats, n_bond_feats, n_hidden, device):
@@ -98,8 +98,6 @@ class GraphNetwork_prop(nn.Module):
         try:
             if g.fc_weight[0]:
                 sto_weight = g.fc_weight
-            # else:
-            #     sto_weight = g.sto_weight
         except:
             sto_weight = g.sto_weight
 
@@ -188,11 +186,8 @@ class EdgeModel(nn.Module):
         self.edge_mlp = nn.Sequential(nn.Linear(n_hidden*3, n_hidden*2), nn.LayerNorm(n_hidden*2), nn.PReLU(), nn.Linear(n_hidden*2, n_hidden))
 
     def forward(self, src, dest, edge_attr):
-        # src, dest: [E, F_x], where E is the number of edges.
-        # edge_attr: [E, F_e]
-        # u: [B, F_u], where B is the number of graphs.
-        # batch: [E] with max entry B - 1.
-        out = torch.cat([src, dest, edge_attr], 1) # u.shape(16, 201, 128) else.shape(34502, 128)
+
+        out = torch.cat([src, dest, edge_attr], 1) 
         return self.edge_mlp(out)
 
 
@@ -203,14 +198,9 @@ class NodeModel(nn.Module):
         self.node_mlp_2 = nn.Sequential(nn.Linear(n_hidden*2, n_hidden*2), nn.LayerNorm(n_hidden*2), nn.PReLU(), nn.Linear(n_hidden*2, n_hidden))
 
     def forward(self, x, edge_index, edge_attr):
-        # x: [N, F_x], where N is the number of nodes.
-        # edge_index: [2, E] with max entry N - 1.
-        # edge_attr: [E, F_e]
-        # u: [B, F_u]
-        # batch: [N] with max entry B - 1.
+
         row, col = edge_index
-        # torch_scatter.scatter_mean(src, index, dim=-1, out=None, dim_size=None, fill_value=0)
-        # averages all values from src into out at the indices specified in the index
+
         out = scatter_sum(edge_attr, col, dim=0, dim_size=x.size(0)) 
         out = torch.cat([x, out], dim=1)
 

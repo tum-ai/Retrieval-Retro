@@ -11,7 +11,7 @@ from .layers import Self_TransformerEncoder_non, Cross_TransformerEncoder_non
 import numpy as np
 
 
-class RetroPLEX(nn.Module):
+class Retrieval_Retro(nn.Module):
     def __init__(self, gnn, layers, input_dim, output_dim, hidden_dim, n_bond_feat, device, t_layers, t_layers_sa, num_heads):
         super().__init__()
 

@@ -3,7 +3,7 @@ import numpy as np
 import argparse
 from scipy import stats
 import torch
-from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.metrics import r2_score
 import torch.nn.functional as F
 from torch.utils.data import TensorDataset
 from torch.utils.data import DataLoader

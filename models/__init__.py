@@ -1,3 +1,3 @@
 from .GraphNetwork import GraphNetwork, GraphNetwork_prop
-from .RetroPLEX import RetroPLEX
+from .Retrieval_Retro import Retrieval_Retro
 from .MPC import MPC, CircleLoss, MultiLossLayer

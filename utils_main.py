@@ -1,7 +1,5 @@
-
 import torch
 from itertools import groupby
-from sklearn.metrics import recall_score, precision_score, f1_score
 import argparse
 import numpy as np
 from itertools import combinations
@@ -96,34 +94,6 @@ def top_k_acc_multiple(y_true_matrix, y_pred_prob, k):
 
     return np.array(top_k)
 
-# LOG_EPSILON = 1e-5
-
-# def neg_log(x):
-#     return - torch.log(x + LOG_EPSILON)
-
-# def log_loss(preds, targs):
-#     return targs * neg_log(preds)
-
-# def log_normal(x, m, v):
-#     log_prob = (-0.5 * (torch.log(v) + (x-m).pow(2) / v)).sum(-1)
-#     return log_prob
-
-# def log_normal_mixture(z, m, v, mask=None):
-#     m = m.unsqueeze(0).expand(z.shape[0], -1, -1)
-#     v = v.unsqueeze(0).expand(z.shape[0], -1, -1)
-#     batch, mix, dim = m.size()
-#     z = z.view(batch, 1, dim).expand(batch, mix, dim)
-#     indiv_log_prob = log_normal(z, m, v) + torch.ones_like(mask)*(-1e6)*(1.-mask)
-#     log_prob = log_mean_exp(indiv_log_prob, mask)
-#     return log_prob
-
-# def log_mean_exp(x, mask):
-#     return log_sum_exp(x, mask) - torch.log(mask.sum(1))
-
-# def log_sum_exp(x, mask):
-#     max_x = torch.max(x, 1)[0]
-#     new_x = x - max_x.unsqueeze(1).expand_as(x)
-#     return max_x + (new_x.exp().sum(1)).log()
 
 
 def parse_args():

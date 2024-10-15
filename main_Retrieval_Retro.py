@@ -14,7 +14,7 @@ from sklearn.metrics import r2_score, mean_absolute_error
 from sklearn.preprocessing import scale
 import json
 from sklearn.model_selection import train_test_split
-from models import RetroPLEX
+from models import Retrieval_Retro
 import utils_main
 from utils_main import recall_multilabel_multiple, top_k_acc_multiple
 
@@ -71,17 +71,9 @@ def main():
     args.split = 'year'
     args.embedder = 'RetroPLEX'
 
-
-
-
-    if args.split == "year":
-        if args.retrieval == 'ours':
-            train_dataset = torch.load(f'./dataset/year/year_train_K_3.pt',map_location=device)
-            valid_dataset = torch.load(f'./dataset/year/year_valid_K_3.pt',map_location=device)
-            test_dataset = torch.load(f'./dataset/year/year_test_K_3.pt',map_location=device)
-    else:
-        print('Wrong Dataset split')
-
+    train_dataset = torch.load(f'./dataset/year/year_train_K_3.pt',map_location=device)
+    valid_dataset = torch.load(f'./dataset/year/year_valid_K_3.pt',map_location=device)
+    test_dataset = torch.load(f'./dataset/year/year_test_K_3.pt',map_location=device)
 
     train_loader = DataLoader(train_dataset, batch_size = args.batch_size, shuffle=True, collate_fn = custom_collate_fn)
     valid_loader = DataLoader(valid_dataset, batch_size = 1, collate_fn = custom_collate_fn)
@@ -101,10 +93,10 @@ def main():
     t_layers_sa = args.t_layers_sa
     thres = 'normal'
 
-    f = open(f"./experiments/RetroPLEX_{args.batch_size}_{args.retrieval}_{args.embedder}_{args.split}_{args.K}_result.txt", "a")
+    f = open(f"./experiments/Retrieval_Retro_{args.batch_size}_{args.retrieval}_{args.embedder}_{args.split}_{args.K}_result.txt", "a")
 
-    if embedder == 'RetroPLEX': 
-        model = RetroPLEX(gnn, layers, input_dim, output_dim, hidden_dim, n_bond_feat, device, t_layers, t_layers_sa, num_heads).to(device)
+    if embedder == 'Retrieval_Retro': 
+        model = Retrieval_Retro(gnn, layers, input_dim, output_dim, hidden_dim, n_bond_feat, device, t_layers, t_layers_sa, num_heads).to(device)
     else:
         print("############### Wrong Model Name ################")
 
