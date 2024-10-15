@@ -5,7 +5,7 @@
     <a href="https://nips.cc/" alt="Main conference">
         <img src="https://img.shields.io/badge/2024 Neurips-blue" /></a>
 </p>
-The offical source code for **Retrieval-Retro: Retrieval-based Inorganic Retrosynthesis with Expert Knowledge**, accepted at **2024 NeurIPS main conference**.
+The offical source code for Retrieval-Retro: Retrieval-based Inorganic Retrosynthesis with Expert Knowledge, accepted at 2024 NeurIPS main conference.
  
  
 ### Overview
