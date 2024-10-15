@@ -3,7 +3,7 @@
     <a href="https://pytorch.org/" alt="PyTorch">
       <img src="https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?e&logo=PyTorch&logoColor=white" /></a>
     <a href="https://nips.cc/" alt="Main conference">
-        <img src="https://img.shields.io/badge/2024 Neurips-blue" /></a>
+        <img src="https://img.shields.io/badge/2024 NeurIPS-blue" /></a>
 </p>
 The offical source code for Retrieval-Retro: Retrieval-based Inorganic Retrosynthesis with Expert Knowledge, accepted at 2024 NeurIPS main conference.
  
