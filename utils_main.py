@@ -99,7 +99,7 @@ def top_k_acc_multiple(y_true_matrix, y_pred_prob, k):
 def parse_args():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--device", '-d', type=int, default=6, help="GPU to use")
+    parser.add_argument("--device", '-d', type=int, default=0, help="GPU to use")
     parser.add_argument("--lr", type=float, default=0.0001, help="Learning Rate")
     parser.add_argument("--epochs", type=int, default=1000, help="Number of Epochs for training")
     parser.add_argument("--batch_size", type=int, default=128, help="Batch Size") 
@@ -109,7 +109,7 @@ def parse_args():
     parser.add_argument("--head", type=int, default=1, help="The number of attetion in Transformer ")
     parser.add_argument("--eval", type=int, default=5, help="evaluation step")
     parser.add_argument("--es", type=int, default=30, help="Early Stopping Criteria")
-    parser.add_argument("--embedder", type=str, default="RetroPLEX", help="Early Stopping Criteria")
+    parser.add_argument("--embedder", type=str, default="Retrieval_Retro", help="Early Stopping Criteria")
     parser.add_argument("--input_dim", type=int, default=200, help="Early Stopping Criteria")
     parser.add_argument("--hidden_dim", type=int, default=256, help="Early Stopping Criteria")
     parser.add_argument("--output_dim", type=int, default=256, help="Early Stopping Criteria")
