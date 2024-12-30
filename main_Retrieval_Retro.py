@@ -58,7 +58,6 @@ def main():
     print(f'configuration: {configuration}')
 
 
-    args.device = 7
     # GPU setting
     device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu')
     torch.cuda.set_device(device)
@@ -69,7 +68,6 @@ def main():
     args.eval = 5
     args.retrieval = 'ours'
     args.split = 'year'
-    args.embedder = 'RetroPLEX'
 
     train_dataset = torch.load(f'./dataset/year/year_train_K_3.pt',map_location=device)
     valid_dataset = torch.load(f'./dataset/year/year_valid_K_3.pt',map_location=device)
