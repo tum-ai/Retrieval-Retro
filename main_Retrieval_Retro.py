@@ -82,9 +82,17 @@ def main():
     gnn = args.gnn
     layers = args.layers
     input_dim = args.input_dim
+    print(f'input_dim: {input_dim}')
     hidden_dim = args.hidden_dim
+    print(f'hidden_dim: {hidden_dim}')
     n_bond_feat = train_dataset[0][0].edge_attr.shape[1]
+    print(f'n_bond_feat: {n_bond_feat}')
     output_dim = train_dataset[0][0].y_multiple.shape[1] 
+    print(f'output_dim: {output_dim}')
+    print(f'train_dataset[0][0].y_multiple: {train_dataset[0][0].y_multiple}')
+    print(f'train_dataset[0][0].y_multiple_len: {train_dataset[0][0].y_multiple_len}')
+    print(f'type(train_dataset[0][0]): {type(train_dataset[0][0])}')
+    print(f'type(train_dataset[0][1]): {type(train_dataset[0][1])}')
     embedder = args.embedder
     num_heads = args.num_heads
     t_layers = args.t_layers
