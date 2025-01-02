@@ -58,9 +58,8 @@ class Retrieval_Retro(nn.Module):
         main_weighted_x = main_graph_x * main_graph.fc_weight.reshape(-1, 1)
         main_graph_emb = scatter_sum(main_weighted_x, main_graph.batch, dim = 0)
 
-        # For additional_graph 
+        # For additional_graphs (MPC)
         add_graph_outputs = []
-
         for graph in additional_graph:
             add_graph = graph.to(self.device)
 
@@ -72,6 +71,7 @@ class Retrieval_Retro(nn.Module):
         
         add_pooled = torch.stack(add_graph_outputs, dim=1).squeeze(2)
 
+        # For additional_graphs (NRE)
         add_graph_outputs_2 = []
         for graph in additional_graph_2:
             add_graph = graph.to(self.device)
