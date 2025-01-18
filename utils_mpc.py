@@ -6,7 +6,7 @@ import numpy as np
 def parse_args():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--device", '-d', type=int, default=6, help="GPU to use")
+    parser.add_argument("--device", '-d', type=int, default=2, help="GPU to use")
     parser.add_argument("--lr", type=float, default=0.0005, help="Learning Rate")
     parser.add_argument("--epochs", type=int, default=1000, help="Number of Epochs for training")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch Size")

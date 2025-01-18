@@ -73,7 +73,7 @@ class MPC(nn.Module):
                 dot_product = torch.bmm(encoding_attn, precursor_matrix.permute(0,2,1)).squeeze(1)
                 probability = torch.sigmoid(dot_product)
 
-        return probability,encoding, recon_output
+        return probability, encoding, recon_output
 
 
 

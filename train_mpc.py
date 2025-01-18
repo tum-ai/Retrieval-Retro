@@ -1,3 +1,6 @@
+import sys
+sys.path.append('/home/thorben/code/mit/Retrieval-Retro/')
+
 import argparse
 import torch
 import torch.nn as nn
@@ -14,6 +17,7 @@ import utils_mpc
 from utils_main import recall_multilabel_multiple, top_k_acc_multiple
 from tensorboardX import SummaryWriter
 from torch_geometric.data import Batch
+from concurrent.futures import ThreadPoolExecutor
 
 torch.set_num_threads(4)
 os.environ['OMP_NUM_THREADS'] = "4"
@@ -39,22 +43,33 @@ def main():
     # GPU setting
     args.embedder = 'mpc'
 
+    print("args", args)
     device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu')
     torch.cuda.set_device(device)
-    print(device)
     seed_everything(seed=args.seed)
 
-    train_dataset = torch.load('./dataset/year/year_train_mpc.pt',map_location=device)
-    valid_dataset = torch.load('./dataset/year/year_valid_mpc.pt',map_location=device)
-    test_dataset = torch.load('./dataset/year/year_test_mpc.pt',map_location=device)
+    # Option 1: Load data in parallel
+    def load_dataset(path, device):
+        return torch.load(path, map_location=device)
+
+    print("Loading datasets...")
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        train_future = executor.submit(load_dataset, '/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset.pt', device)
+        valid_future = executor.submit(load_dataset, './dataset/year/year_valid_mpc.pt', device)
+        test_future = executor.submit(load_dataset, './dataset/year/year_test_mpc.pt', device)
+        
+        train_dataset = train_future.result()
+        valid_dataset = valid_future.result()
+        test_dataset = test_future.result()
+
+    print("Dataset Loaded!")
 
     train_loader = DataLoader(train_dataset, batch_size = args.batch_size, shuffle=True) 
     valid_loader = DataLoader(valid_dataset, batch_size = 1)
     test_loader = DataLoader(test_dataset, batch_size = 1)
-
-    print("Dataset Loaded!")
-
-
+    print(train_dataset[0].y_multiple)
+    print(train_dataset[0])
+    print("args", args)
     input_dim = args.input_dim
     hidden_dim = args.hidden_dim
     output_dim = train_dataset[0].y_multiple.shape[1] 
