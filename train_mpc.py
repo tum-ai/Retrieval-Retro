@@ -54,9 +54,9 @@ def main():
 
     print("Loading datasets...")
     with ThreadPoolExecutor(max_workers=3) as executor:
-        train_future = executor.submit(load_dataset, '/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset.pt', device)
-        valid_future = executor.submit(load_dataset, './dataset/year/year_valid_mpc.pt', device)
-        test_future = executor.submit(load_dataset, './dataset/year/year_test_mpc.pt', device)
+        train_future = executor.submit(load_dataset, '/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_train.pt', device)
+        valid_future = executor.submit(load_dataset, '/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_val.pt', device)
+        test_future = executor.submit(load_dataset, '/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_test.pt', device)
         
         train_dataset = train_future.result()
         valid_dataset = valid_future.result()
