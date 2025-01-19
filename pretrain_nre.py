@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 import numpy as np
@@ -109,9 +108,9 @@ def main():
     
     ########################## You can use the checkpoint of pretrained model for transfer learning###########################
     # For the dataset size, we can't upload full dft-calculated data
-    # checkpoint = torch.load("./", map_location = device)
-    # model.load_state_dict(checkpoint['model_state_dict'], strict=True)
-    # print(f'\nModel Weight Loaded')
+    checkpoint = torch.load("/home/thorben/code/mit/Retrieval-Retro/dataset/TL_pretrain(formation_exp)_embedder(graphnetwork)_lr(0.0005)_batch_size(256)_hidden(256)_seed(0)_.pt", map_location = device)
+    model.load_state_dict(checkpoint['model_state_dict'], strict=True)
+    print(f'\nModel Weight Loaded')
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-2)
     criterion_2 = nn.L1Loss()
@@ -148,6 +147,20 @@ def main():
             sys.stdout.write('\r[ epoch {}/{} | batch {}/{} ] Total Loss : {:.4f} '.format(epoch + 1, args.epochs, bc + 1, num_batch + 1, (train_loss/(bc+1))))
             sys.stdout.flush()
 
+        # Add periodic checkpointing
+        if args.checkpoint_interval > 0 and (epoch + 1) % args.checkpoint_interval == 0:
+            save_dir = './checkpoints/nre/'
+            os.makedirs(save_dir, exist_ok=True)
+            checkpoint = {
+                'epoch': epoch + 1,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'train_loss': train_loss/(bc+1),
+                'args': args
+            }
+            torch.save(checkpoint, os.path.join(save_dir, f'model_epoch_{epoch+1}.pt'))
+            print(f"\nSaved checkpoint at epoch {epoch+1}")
+
         if (epoch + 1) % args.eval == 0 :
             
             time = (timer() - start)
@@ -178,6 +191,20 @@ def main():
                     f.write("best RMSE : {:.4f} \n".format(test_rmse))
                     f.write("best MSE : {:.4f} \n".format(test_mse))
                     f.write("best MAE : {:.4f} \n".format(test_mae))
+                    
+                    # Save model checkpoint
+                    save_dir = './checkpoints/nre/'
+                    os.makedirs(save_dir, exist_ok=True)
+                    checkpoint = {
+                        'epoch': best_epoch,
+                        'model_state_dict': model.state_dict(),
+                        'optimizer_state_dict': optimizer.state_dict(),
+                        'best_mae': best_mae,
+                        'args': args
+                    }
+                    torch.save(checkpoint, os.path.join(save_dir, f'model_best_mae_{best_mae:.4f}.pt'))
+                    print(f"Saved best model to {save_dir}")
+                    
                     sys.exit()
         
     print("\ntraining done!")

@@ -41,7 +41,7 @@ def get_numerical_data_loader(*data, batch_size, shuffle=False, dtype=torch.floa
 def parse_args():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--device", '-d', type=int, default=6, help="GPU to use")
+    parser.add_argument("--device", '-d', type=int, default=1, help="GPU to use")
     parser.add_argument("--seed", type=int, default=0, help = 'Random seed')
     parser.add_argument("--lr", type=float, default=0.0001, help="Learning Rate")
     parser.add_argument("--epochs", type=int, default=1000, help="Number of Epochs for training")
@@ -52,7 +52,9 @@ def parse_args():
     parser.add_argument("--es", type=int, default=50, help="Early Stopping Criteria")
     parser.add_argument("--embedder", type=str, default="graphnetwork", help="GNNs")
     parser.add_argument("--hidden", type=int, default=256, help="Early Stopping Criteria")
-    parser.add_argument("--pretrain", type=str, default='formation', help="pretraining_task")
+    parser.add_argument("--pretrain", type=str, default='formation_exp', help="pretraining_task")
+    parser.add_argument('--checkpoint_interval', type=int, default=50,
+                      help='Save checkpoint every N epochs (0 to disable)')
     return parser.parse_args()
 
 

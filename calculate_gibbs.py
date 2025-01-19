@@ -48,22 +48,20 @@ def make_retrieved(mode, split, rank_matrix, k, seed):
 def main():
     args = utils_main.parse_args()
     train_config = utils_main.training_config(args)
-    configuration = utils_main.exp_get_name1(train_config)
-    print(f'configuration: {configuration}')
+    # configuration = utils_nre.exp_get_name1(train_config)
+    # print(f'configuration: {configuration}')
 
-
-    args.device = 7
     device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu')
     torch.cuda.set_device(device)
     print(device)
     seed_everything(seed=args.seed)
 
-    precursor_graph = torch.load("./dataset/year_precursor_graph.pt", map_location=device)
-    precursor_loader = DataLoader(precursor_graph, batch_size = 1, shuffle=False)
+    # precursor_graph = torch.load("./dataset/year_precursor_graph.pt", map_location=device)
+    # precursor_loader = DataLoader(precursor_graph, batch_size = 1, shuffle=False)
 
-    train_dataset = torch.load('./dataset/year/year_train_mpc.pt')
-    valid_dataset = torch.load('./dataset/year/year_valid_mpc.pt')
-    test_dataset = torch.load('./dataset/year/year_test_mpc.pt')
+    train_dataset = torch.load('/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_train.pt')
+    valid_dataset = torch.load('/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_val.pt')
+    test_dataset = torch.load('/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_test.pt')
 
     train_loader = DataLoader(train_dataset, batch_size = 1, shuffle=False)
     valid_loader = DataLoader(valid_dataset, batch_size = 1)
@@ -78,7 +76,7 @@ def main():
     output_dim = train_dataset[0].y_multiple.shape[1] #Dataset precursor set dim 
 
     model = GraphNetwork_prop(args.layers, n_atom_feat, n_bond_feat, n_hidden, device).to(device)
-    checkpoint = torch.load("./dataset/TL_pretrain(formation_exp)_embedder(graphnetwork)_lr(0.0005)_batch_size(256)_hidden(256)_seed(0)_.pt", map_location = device)
+    checkpoint = torch.load("/home/thorben/code/mit/Retrieval-Retro/checkpoints/nre/model_best_mae_0.0698.pt", map_location = device)
     model.load_state_dict(checkpoint['model_state_dict'], strict=True)
     print(f'\nModel Weight Loaded')
 
@@ -93,14 +91,14 @@ def main():
     model.eval()
     with torch.no_grad():
 
-        for bc, batch in enumerate(precursor_loader):
-            batch.to(device)
+        # for bc, batch in enumerate(precursor_loader):
+        #     batch.to(device)
 
-            y,_ = model(batch)
+        #     y,_ = model(batch)
 
-            precursor_formation_list.append(y)
-        precursor_y_tensor = torch.stack(precursor_formation_list)
-        torch.save(precursor_y_tensor, f'./dataset/{args.split}_precursor_formation_energy.pt')
+        #     precursor_formation_list.append(y)
+        # precursor_y_tensor = torch.stack(precursor_formation_list)
+        # torch.save(precursor_y_tensor, f'./dataset/{args.split}_precursor_formation_energy.pt')
 
         for bc, batch in enumerate(train_loader):
             batch.to(device)
@@ -109,7 +107,7 @@ def main():
 
             train_formation_list.append(y)
         train_y_tensor = torch.stack(train_formation_list)
-        torch.save(train_y_tensor, f'./dataset/{args.split}_train_formation_energy.pt')
+        torch.save(train_y_tensor, f'./dataset/mit_{args.split}_train_formation_energy.pt')
 
         for bc, batch in enumerate(valid_loader):
             batch.to(device)
@@ -118,7 +116,7 @@ def main():
 
             valid_formation_list.append(y)
         valid_y_tensor = torch.stack(valid_formation_list)
-        torch.save(valid_y_tensor, f'./dataset/{args.split}_valid_formation_energy.pt')
+        torch.save(valid_y_tensor, f'./dataset/mit_{args.split}_valid_formation_energy.pt')
 
         for bc, batch in enumerate(test_loader):
             batch.to(device)
@@ -127,7 +125,7 @@ def main():
 
             test_formation_list.append(y)
         test_y_tensor = torch.stack(test_formation_list)
-        torch.save(test_y_tensor, f'./dataset/{args.split}_test_formation_energy.pt')
+        torch.save(test_y_tensor, f'./dataset/mit_{args.split}_test_formation_energy.pt')
     
     precursor_formation_y = torch.load('./dataset/year_precursor_formation_energy.pt',map_location=device)
     train_formation_y = torch.load('./dataset/year_train_formation_energy.pt', map_location=device)
