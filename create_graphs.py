@@ -1,152 +1,232 @@
 import os 
+import re
 import ast
-
 import pandas as pd
 import numpy as np
 import torch 
-import torch.nn as nn
 from torch_geometric.data import Data
 from pymatgen.core import Composition
+from typing import Dict, List, Set, Tuple, Optional
 
-def get_unique_elements(csv_path):
-    """Extract unique elements from a dataset CSV file."""
-    df = pd.read_csv(csv_path)
-    materials = list(df['target_formula'])
-    precursors = list(df['precursor_formulas'])
-
-    unique_elements = set()
-    for material in materials:
+class MaterialDatasetProcessor:
+    def __init__(self, matscholar_path: str):
+        """
+        Initialize the dataset processor.
+        
+        Args:
+            matscholar_path: Path to matscholar embeddings file
+        """
+        self.matscholar_embeddings = self._load_matscholar_embeddings(matscholar_path)
+        self.element_lookup = None
+        self.precursor_lookup = None
+        
+    def _load_matscholar_embeddings(self, path: str) -> Dict[str, torch.Tensor]:
+        """Load and process matscholar embeddings."""
+        df_matscholar = pd.read_csv(path, index_col=0)
+        return {
+            element: torch.tensor(row.values, dtype=torch.float32)
+            for element, row in df_matscholar.iterrows()
+        }
+    
+    def prepare_dataset_lookups(self, train_path: str, val_path: Optional[str] = None, 
+                              test_path: Optional[str] = None) -> None:
+        """
+        Create consistent lookups from all datasets.
+        
+        Args:
+            train_path: Path to training data
+            val_path: Optional path to validation data
+            test_path: Optional path to test data
+        """
+        # Get unique elements across all datasets
+        all_elements = set()
+        all_precursors = set()
+        
+        for path in [p for p in [train_path, val_path, test_path] if p]:
+            elements, precursors = self._extract_unique_elements_and_precursors(path)
+            all_elements.update(elements)
+            all_precursors.update(precursors)
+        
+        # Create sorted lookups for consistency
+        self.element_lookup = np.array(sorted(all_elements))
+        self.precursor_lookup = np.array(sorted(all_precursors))
+        
+        print(f"Found {len(self.element_lookup)} unique elements")
+        print(f"Found {len(self.precursor_lookup)} unique precursors")
+    
+    def _extract_unique_elements_and_precursors(self, csv_path: str) -> Tuple[Set[str], Set[str]]:
+        """Extract unique elements and precursors from a dataset."""
+        df = pd.read_csv(csv_path)
+        
+        # Process target materials
+        unique_elements = set()
+        for material in df['target_formula']:
+            try:
+                comp = Composition(material).element_composition
+                unique_elements.update(comp.get_el_amt_dict().keys())
+            except Exception as e:
+                print(f"Error processing material {material}: {e}")
+        
+        # Process precursors
+        unique_precursors = set()
+        for precursor_set in df['precursor_formulas']:
+            try:
+                formulas = ast.literal_eval(precursor_set)
+                unique_precursors.update(formulas)
+            except Exception as e:
+                print(f"Error processing precursors {precursor_set}: {e}")
+        
+        return unique_elements, unique_precursors
+    
+    def _process_material_composition(self, material: str) -> List[Tuple[str, float]]:
+        """Process a single material's composition."""
         try:
-            fractional_comp = Composition(material).element_composition
-            elements = fractional_comp.get_el_amt_dict().keys()
-            unique_elements.update(elements)
+            fractional_comp = Composition(material).fractional_composition
+            return list(fractional_comp.get_el_amt_dict().items())
         except Exception as e:
             print(f"Error processing material {material}: {e}")
+            return []
+    
+    def create_graph_dataset(self, csv_path: str, dataset_type: str, 
+                           output_dir: str) -> List[Data]:
+        """
+        Create graph dataset from input CSV file.
+        
+        Args:
+            csv_path: Path to input CSV file
+            dataset_type: Type of dataset ('train', 'val', or 'test')
+            output_dir: Directory to save the processed dataset
+        """
+        if self.element_lookup is None or self.precursor_lookup is None:
+            raise ValueError("Must call prepare_dataset_lookups before creating graphs")
+        
+        df = pd.read_csv(csv_path)
+        
+        # Group by target_formula to get all precursor sets for each target
+        grouped_df = df.groupby('target_formula')['precursor_formulas'].agg(list).reset_index()
+        data_list = []
+        
+        for idx, row in grouped_df.iterrows():
+            try:
+                # Process target material
+                comp_tuples = self._process_material_composition(row['target_formula'])
+                if not comp_tuples:
+                    continue
+                
+                # Create node features
+                x_list = []
+                comp_fea = torch.zeros(len(self.element_lookup))
+                for element, amount in comp_tuples:
+                    x_list.append(self.matscholar_embeddings[element])
+                    element_idx = np.where(self.element_lookup == element)[0][0]
+                    comp_fea[element_idx] = amount
+                
+                x = torch.stack(x_list)
+                fc_weight = comp_fea[comp_fea.nonzero()].reshape(-1)
+                
+                # Create edge features
+                edge_index = []
+                nodes = torch.arange(len(x_list))
+                for n1 in nodes:
+                    for n2 in nodes:
+                        edge_index.append([n1.item(), n2.item()])
+                edge_index = torch.tensor(edge_index).t()
+                edge_attr = torch.rand(edge_index.shape[1], 400)
+                
+                # Process all precursor sets for this target
+                all_precursor_sets = [ast.literal_eval(p_set) for p_set in row['precursor_formulas']]
+                num_precursor_sets = len(all_precursor_sets)
+                
+                # Create target labels - stack multiple precursor set embeddings
+                y_multiple = torch.zeros(num_precursor_sets, len(self.precursor_lookup))
+                for i, precursor_set in enumerate(all_precursor_sets):
+                    for precursor in precursor_set:
+                        precursor_idx = np.where(self.precursor_lookup == precursor)[0][0]
+                        y_multiple[i, precursor_idx] = 1
+                
+                # Calculate y_lb_all using OR operation across all combinations
+                y_lb_all = torch.any(y_multiple, dim=0).float()
+                
+                # Create a separate graph for each precursor combination
+                data_list_for_target = []
+                for i in range(num_precursor_sets):
+                    data = Data(
+                        x=x,
+                        edge_index=edge_index, 
+                        edge_attr=edge_attr,
+                        fc_weight=fc_weight,
+                        comp_fea=comp_fea,
+                        y_multiple=y_multiple,
+                        y_multiple_len=torch.tensor([num_precursor_sets]),
+                        y_lb_freq=y_lb_all,
+                        y_lb_avg=y_lb_all,
+                        y_lb_all=y_lb_all,
+                        y_lb_one=y_multiple[i],  # Each combination becomes y_lb_one for a separate graph
+                        y_string_label=row['target_formula']
+                    )
+                    data_list_for_target.append(data)
+                
+                data_list.extend(data_list_for_target)
+                
+            except Exception as e:
+                print(f"Error processing row {idx}: {e}")
+        
+        # Save dataset
+        output_path = os.path.join(output_dir, f"mit_impact_dataset_{dataset_type}.pt")
+        torch.save(data_list, output_path)
+        print(f"Created {len(data_list)} graphs for {dataset_type} set")
+        
+        return data_list
 
-    all_prec = []
-    for precursor_set in precursors: 
-        formulas = ast.literal_eval(precursor_set)
-        for formula in formulas:
-            all_prec.extend(formula)
-    unique_pre = np.unique(np.array(all_prec))
-   
-    return unique_elements, unique_pre
-
-def create_lookup_from_all_datasets(train_path, val_path, test_path):
-    """Create a consistent lookup table from all datasets."""
-    all_elements = set()
-    for path in [train_path, val_path, test_path]:
-        if path and os.path.exists(path):
-            elements = get_unique_elements(path)
-            all_elements.update(elements)
+def main():
+    """Example usage of the MaterialDatasetProcessor."""
+    base_path = os.getcwd()
+    matscholar_path = os.path.join(base_path, "dataset/matscholar.csv")
     
-    # Convert to sorted list for consistency
-    lookup = np.array(sorted(all_elements))
-    return lookup
-
-def create_graph_dataset(input_csv_path, matscholar_path, dataset_type, lookup):
-    """
-    Create graph dataset from input CSV file and save as PyTorch geometric dataset
+    # Initialize processor
+    processor = MaterialDatasetProcessor(matscholar_path)
     
-    Args:
-        input_csv_path (str): Path to input CSV file containing material formulas
-        matscholar_path (str): Path to matscholar embeddings CSV file
-        dataset_type (str): Type of dataset, either 'train', 'val', or 'test'
-    """
-    
-    materials, unique_precursors = get_unique_elements('/home/thorben/code/mit/PrecursorRanker/data/dataset/dataset_w_candidates_w_val/train_data_up_to_2014.csv')
-    
-    # Read input data
-    df = pd.read_csv(input_csv_path)
-    
-    df_matscholar = pd.read_csv(matscholar_path, index_col=0)
-
-    embeddings_dict = {
-        element: torch.tensor(row.values, dtype=torch.float32)
-        for element, row in df_matscholar.iterrows()
+    # Define dataset paths
+    data_paths = {
+        "train": "/home/thorben/code/mit/PrecursorRanker/data/dataset/dataset_w_candidates_w_val/train_data_up_to_2014.csv",
+        "val": "/home/thorben/code/mit/PrecursorRanker/data/dataset/dataset_w_candidates_w_val/val_data_up_to_2014.csv",
+        "test": "/home/thorben/code/mit/PrecursorRanker/data/dataset/dataset_w_candidates_w_val/test_data_after_2014.csv"
     }
+    
+    # Prepare lookups using all datasets
+    processor.prepare_dataset_lookups(
+        train_path=data_paths["train"],
+        val_path=data_paths["val"],
+        test_path=data_paths["test"]
+    )
 
-    get_unique_targets = []
-    comp_tuples_list = []
-    for material in materials:
-        fractional_comp = Composition(material).fractional_composition
+    print(processor.element_lookup)
+    print(processor.element_lookup.shape)
+    print(processor.precursor_lookup)
+    print(processor.precursor_lookup.shape)
+    
+    # Create datasets
+    output_dir = os.path.join(base_path, "dataset")
+    
+    for split, path in data_paths.items():
+        processor.create_graph_dataset(path, split, output_dir)
 
-        sparse_comp_vec = fractional_comp.get_el_amt_dict()
-        
-        get_comp_tuples = [comp for comp in sparse_comp_vec.items()]
-        comp_tuples_list.append(get_comp_tuples)
-        
-    data_list = []
-    for sublist, precursor_set in zip(comp_tuples_list, unique_precursors):
-        lookup_temp = np.copy(lookup)
-        x_list = []
-        for comp, amount in sublist:
-            x_list.append(embeddings_dict[comp])
-            lookup_temp[lookup_temp == comp] = amount
-        x = torch.stack(x_list)
-        
-        comp_fea = torch.tensor([float(x) if isinstance(x, (float, int)) else 0 for x in lookup_temp], dtype=torch.float32)
-        fc_weight = comp_fea[torch.nonzero(comp_fea)].reshape(-1).to(torch.float32)
-
-        edge_index = []
-        edge_attributes = []
-        nodes = torch.arange(0,len(x_list))
-        for node1 in nodes:
-            for node2 in nodes:
-                edge_index.append(torch.tensor([node1.item(), node2.item()]))
-                # graph.add_edge(node1, node2)
-        edge_index = torch.stack(edge_index).reshape(2, -1)
-        # edge_attributes = torch.nn.Embedding(num_embeddings=edge_index.shape[1], embedding_dim=400)
-        edge_attributes = torch.zeros(edge_index.shape[1], 400)
-        
-        
-        # TODO: add y_multiple, y_multiple_len, y_lb_freq, y_lb_avg, y_lb_all
-        # y_multiple is output dimension of the model
-        y_multiple = torch.zeros(1, 798)
-
-        #
-        #y_multiple_len = torch.zeros(1)
-        #y_lb_avg = torch.zeros(1)
-        #y_lb_all = torch.zeros(1)
-        #y_lb_one = torch.zeros(1)
-
-        
-        # train Data(x=[3, 200], edge_index=[2, 9], edge_attr=[9, 400], fc_weight=[3], comp_fea=[83], y_exp_form=-0.8730636239051819)
-        # val Data(x=[3, 200], edge_index=[2, 9], edge_attr=[9, 400], fc_weight=[3], comp_fea=[83], y_multiple=[1, 798], y_multiple_len=1, y_lb_freq=[798], y_lb_avg=[798], y_lb_all=[798], y_lb_one=[798])
-        # test Data(x=[3, 200], edge_index=[2, 9], edge_attr=[9, 400], fc_weight=[3], comp_fea=[83], y_multiple=[1, 798], y_multiple_len=1, y_lb_freq=[798], y_lb_avg=[798], y_lb_all=[798], y_lb_one=[798])
-        
-        if dataset_type == 'train':
-            data = Data(x=x, edge_index=edge_index, edge_attr=edge_attributes, fc_weight=fc_weight, comp_fea=comp_fea, y_multiple=y_multiple)
-        elif dataset_type == 'val' or dataset_type == 'test':
-            data = Data(x=x, edge_index=edge_index, edge_attr=edge_attributes, fc_weight=fc_weight, comp_fea=comp_fea, y_multiple=y_multiple, y_multiple_len=y_multiple_len, y_lb_freq=y_lb_freq, y_lb_avg=y_lb_avg, y_lb_all=y_lb_all, y_lb_one=y_lb_one)
-        # print(data)
-        data_list.append(data)
-    torch.save(data_list, os.path.join(path, "dataset/mit_impact_dataset_" + dataset_type + ".pt"))
-    return data_list
+    # print train data
+    train_data = torch.load(os.path.join(output_dir, "mit_impact_dataset_train.pt"))
+    # print train data length
+    print(f"Train data length: {len(train_data)}")
+    #print(train_data[0])
+    #print sample with multiple precursors (y_multiple_len > 1)
+    # print for target formula: "Zr0.3Ti0.7Pb1O3" then print y_multiple index and value as well as the precursor for this index
+    for data in train_data:
+        if data.y_string_label == "Zr0.3Ti0.7Pb1O3":
+            print(data)
+            print(f"Number of precursor sets (y_multiple_len): {data.y_multiple_len}")
+            print("\nPrecursor sets (y_multiple):")
+            for i in range(data.y_multiple_len.item()):
+                precursor_indices = data.y_multiple[i].nonzero().squeeze()
+                precursors = [processor.precursor_lookup[idx] for idx in precursor_indices]
+                print(f"Set {i + 1}: {precursors}")
 
 if __name__ == "__main__":
-    # Example usage
-    path = os.getcwd()
-    matscholar_path = '/home/thorben/code/mit/Retrieval-Retro/dataset/matscholar.csv'
-
-    # Create train dataset
-    train_input = '/home/thorben/code/mit/PrecursorRanker/data/dataset/dataset_w_candidates_w_val/train_data_up_to_2014.csv'
-    val_input = '/home/thorben/code/mit/PrecursorRanker/data/dataset/dataset_w_candidates_w_val/val_data_up_to_2014.csv'
-    test_input = '/home/thorben/code/mit/PrecursorRanker/data/dataset/dataset_w_candidates_w_val/test_data_after_2014.csv'
-    train_output = os.path.join(path, "dataset/mit_impact_dataset_train.pt")
-    val_output = os.path.join(path, "dataset/mit_impact_dataset_val.pt")
-    test_output = os.path.join(path, "dataset/mit_impact_dataset_test.pt")
-
-    lookup = create_lookup_from_all_datasets(train_input, val_input, test_input)
-
-    train_data = create_graph_dataset(train_input, matscholar_path, 'train', lookup)
-    #val_data = create_graph_dataset(val_input, matscholar_path, 'val', lookup)
-    #test_data = create_graph_dataset(test_input, matscholar_path, 'test', lookup)
-
-    # print first 10 elements of train_data
-    for i in range(10):
-        print(train_data[i])
-
-
-
-
+    main()

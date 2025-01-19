@@ -54,9 +54,16 @@ def main():
 
     print("Loading datasets...")
     with ThreadPoolExecutor(max_workers=3) as executor:
-        train_future = executor.submit(load_dataset, '/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_train.pt', device)
-        valid_future = executor.submit(load_dataset, '/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_val.pt', device)
-        test_future = executor.submit(load_dataset, '/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_test.pt', device)
+        if args.use_our_data:   
+            print("Loading our data...")
+            train_future = executor.submit(load_dataset, '/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_train.pt', device)
+            valid_future = executor.submit(load_dataset, '/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_val.pt', device)
+            test_future = executor.submit(load_dataset, '/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_test.pt', device)
+        else:
+            print("Loading original data...")
+            train_future = executor.submit(load_dataset, '/home/thorben/code/mit/Retrieval-Retro/dataset/year/year_train_mpc.pt', device)
+            valid_future = executor.submit(load_dataset, '/home/thorben/code/mit/Retrieval-Retro/dataset/year/year_valid_mpc.pt', device)
+            test_future = executor.submit(load_dataset, '/home/thorben/code/mit/Retrieval-Retro/dataset/year/year_test_mpc.pt', device)
         
         train_dataset = train_future.result()
         valid_dataset = valid_future.result()
@@ -102,6 +109,11 @@ def main():
     test_macro = 0
     test_micro = 0
     best_acc_list = []
+
+    # Add model save directory
+    save_dir = f"./checkpoints/"
+    os.makedirs(save_dir, exist_ok=True)
+    
     for epoch in range(args.epochs):
         train_loss = 0
         model.train()
@@ -133,8 +145,9 @@ def main():
             optimizer.step()
             train_loss += loss
 
-            sys.stdout.write(f'\r[ epoch {epoch+1}/{args.epochs} | batch {bc+1}/{num_batch} ] Total Loss : {(train_loss/(bc+1)):.4f}')
-            sys.stdout.flush()
+        # print epoch results
+        print(f'\r[ epoch {epoch+1}/{args.epochs} | Total Loss : {(train_loss/(bc+1)):.4f}')
+
 
         if (epoch + 1) % args.eval == 0 :
             model.eval()
@@ -261,8 +274,26 @@ def main():
                         f.write(f"\nbest Top-10 ACC MULTI: {multi_top_10_acc:.4f}")
                         f.write(f"\nbest Micro Recall: {test_micro:.4f}")
                         f.write(f"\nbest Macro Recall: {test_macro:.4f}")
+                        f.write(f"\nSaved model at epoch {epoch+1}")
+                        checkpoint = {
+                            'epoch': epoch,
+                            'model_state_dict': model.state_dict(),
+                            'optimizer_state_dict': optimizer.state_dict(),
+                            'args': args
+                        }
+                        torch.save(checkpoint, os.path.join(save_dir, f'model_epoch_{epoch+1}_{args.lr}_our_data_{args.use_our_data}.pt'))
                         sys.exit()
 
+            # Save model every 50 epochs
+            if (epoch + 1) % 50 == 0:
+                checkpoint = {
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'args': args
+                }
+                torch.save(checkpoint, os.path.join(save_dir, f'model_epoch_{epoch+1}_{args.lr}_our_data_{args.use_our_data}.pt'))
+                print(f"\nSaved checkpoint at epoch {epoch+1}")
 
     print(f'Training Done not early stopping')
 

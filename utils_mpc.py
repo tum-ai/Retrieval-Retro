@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument("--lb", type=str, default = 'one', help = 'LB Strategy')
     parser.add_argument("--loss", type=str, default = 'adaptive', help = 'Loss Strategy')
     parser.add_argument("--retrieval", type=str, default = 'ours', help = 'Retrieval')
+    parser.add_argument("--use_our_data", action='store_true', help='Use our data')
 
     return parser.parse_args()
 

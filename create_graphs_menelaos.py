@@ -85,3 +85,5 @@ for sublist, precursor_set in zip(comp_tuples_list, precursors):
     data_list.append(data)
 torch.save(data_list, os.path.join(path, "dataset/mit_impact_dataset.pt"))
 
+print(data_list[0])
+
