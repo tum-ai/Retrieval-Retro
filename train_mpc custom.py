@@ -55,23 +55,23 @@ def main():
     torch.cuda.set_device(device)
     seed_everything(seed=args.seed)
 
-    print(f"Starting training for {args.our_data_difficulty} difficulty")
+
     print("Loading datasets...")
     if args.our_data_difficulty == "easy":   
         print("Loading our data (easy)...")
-        train_dataset = torch.load('./dataset/our_mpc/easy/mit_impact_dataset_train.pt',)
-        valid_dataset = torch.load('./dataset/our_mpc/easy/mit_impact_dataset_val.pt')
-        test_dataset = torch.load('./dataset/our_mpc/easy/mit_impact_dataset_test.pt')
+        train_dataset = torch.load('./dataset/our_mpc/mit_impact_dataset_easy_train.pt',)
+        valid_dataset = torch.load('./dataset/our_mpc/mit_impact_dataset_easy_val.pt')
+        test_dataset = torch.load('./dataset/our_mpc/mit_impact_dataset_easy_test.pt')
     elif args.our_data_difficulty == "medium":
         print("Loading our data (medium)...")
-        train_dataset = torch.load('./dataset/our_mpc/medium/mit_impact_dataset_train.pt')
-        valid_dataset = torch.load('./dataset/our_mpc/medium/mit_impact_dataset_val.pt')
-        test_dataset = torch.load('./dataset/our_mpc/medium/mit_impact_dataset_test.pt')
+        train_dataset = torch.load('./dataset/our_mpc/mit_impact_dataset_medium_train.pt')
+        valid_dataset = torch.load('./dataset/our_mpc/mit_impact_dataset_medium_val.pt')
+        test_dataset = torch.load('./dataset/our_mpc/mit_impact_dataset_medium_test.pt')
     elif args.our_data_difficulty == "hard":
         print("Loading our data (hard)...")
-        train_dataset = torch.load('./dataset/our_mpc/hard/mit_impact_dataset_train.pt')
-        valid_dataset = torch.load('./dataset/our_mpc/hard/mit_impact_dataset_val.pt')
-        test_dataset = torch.load('./dataset/our_mpc/hard/mit_impact_dataset_test.pt')
+        train_dataset = torch.load('./dataset/our_mpc/mit_impact_dataset_hard_train.pt')
+        valid_dataset = torch.load('./dataset/our_mpc/mit_impact_dataset_hard_val.pt')
+        test_dataset = torch.load('./dataset/our_mpc/mit_impact_dataset_hard_test.pt')
     else:
         print("Loading original data...")
         train_dataset = torch.load('./dataset/year/year_train_mpc.pt')
@@ -81,18 +81,15 @@ def main():
     print("Dataset Loaded!")
 
     # Modified DataLoader settings
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=1)
-    valid_loader = DataLoader(valid_dataset, batch_size=1, num_workers=0)
-    test_loader = DataLoader(test_dataset, batch_size=1, num_workers=0)
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    valid_loader = DataLoader(valid_dataset, batch_size=1)
+    test_loader = DataLoader(test_dataset, batch_size=1)
 
-    print(train_dataset[0].y_multiple)
-    print(train_dataset[0])
-    print("args", args)
     input_dim = args.input_dim
     hidden_dim = args.hidden_dim
     output_dim = train_dataset[0].y_multiple.shape[1] 
     embedder = args.embedder
-    loss_type = 'adaptive' #was adaptive
+    loss_type = 'bce' #was adaptive
     task_names = ['multi-label', 'reconstruction']
 
     f = open(f"./experiments/mpc_{args.loss}_{args.split}_{args.embedder}_result.txt", "a")
@@ -165,7 +162,7 @@ def main():
                 'optimizer_state_dict': optimizer.state_dict(),
                 'args': args
             }
-            torch.save(checkpoint, os.path.join(save_dir, f'./mpc/model_epoch_{epoch+1}_{args.lr}_our_data_{args.our_data_difficulty}.pt'))
+            torch.save(checkpoint, os.path.join(save_dir, f'./mpc/model_epoch_{epoch+1}_{args.lr}_our_data_{args.use_our_data}.pt'))
             print(f"\nSaved checkpoint at epoch {epoch+1}")
 
         if (epoch + 1) % args.eval == 0 :
@@ -300,7 +297,7 @@ def main():
                             'optimizer_state_dict': optimizer.state_dict(),
                             'args': args
                         }
-                        torch.save(checkpoint, os.path.join(save_dir, f'./mpc/early_stop_model_epoch_{epoch+1}_{args.lr}_our_data_{args.our_data_difficulty}.pt'))
+                        torch.save(checkpoint, os.path.join(save_dir, f'./mpc/early_stop_model_epoch_{epoch+1}_{args.lr}_our_data_{args.use_our_data}.pt'))
                         sys.exit()
 
 
@@ -318,7 +315,7 @@ def main():
     f.write(f"\nbest Top-10 ACC ONE: {multi_top_10_acc:.4f}")
     f.write(f"\nbest Micro Recall: {test_micro:.4f}")
     f.write(f"\nbest Macro Recall: {test_macro:.4f}")
-    torch.save(checkpoint, os.path.join(save_dir, f'./mpc/training_done_model_epoch_{epoch+1}_{args.lr}_our_data_{args.our_data_difficulty}.pt'))
+    torch.save(checkpoint, os.path.join(save_dir, f'./mpc/training_done_model_epoch_{epoch+1}_{args.lr}_our_data_{args.use_our_data}.pt'))
     f.close()
 
 

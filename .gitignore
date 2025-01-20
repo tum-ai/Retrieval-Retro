@@ -160,3 +160,14 @@ cython_debug/
 #.idea/
 
 /dataset/
+*.pt
+*.pth
+*.csv
+*.json
+*.txt
+*.npy
+*.npz
+*.pkl
+*.joblib
+*.joblib
+*.png

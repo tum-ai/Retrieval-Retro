@@ -69,8 +69,9 @@ def main():
 
     # Load dataset
     if args.pretrain == "formation_exp":
-        dataset = torch.load('./dataset/exp_formation_energy.pt', map_location=device)
-
+        dataset = torch.load('/home/thorben/code/mit/Retrieval-Retro/dataset/nre/mit_impact_dataset_experimental_formation_energy.pt', map_location=device)
+    elif args.pretrain == 'formation_ft' or args.pretrain == 'formation':
+        dataset = torch.load('./dataset/materials_project_formation_energy.pt', map_location=device)
     else:
         print("wrong pretraining dataset")
 
@@ -79,8 +80,7 @@ def main():
     test_ratio = 0.10
 
     train_dataset, test_dataset = train_test_split(dataset, test_size=1 - train_ratio, random_state=args.seed)
-    valid_dataset, test_dataset = train_test_split(test_dataset, test_size=test_ratio/(test_ratio + validation_ratio), random_state= args.seed) 
-    
+    valid_dataset, test_dataset = train_test_split(test_dataset, test_size=test_ratio/(test_ratio + validation_ratio), random_state=args.seed)
     print(f'train_dataset_len:{len(train_dataset)}')
     print(f'valid_dataset_len:{len(valid_dataset)}')
     print(f'test_dataset_len:{len(test_dataset)}')
@@ -108,7 +108,7 @@ def main():
     
     ########################## You can use the checkpoint of pretrained model for transfer learning###########################
     # For the dataset size, we can't upload full dft-calculated data
-    checkpoint = torch.load("/home/thorben/code/mit/Retrieval-Retro/dataset/TL_pretrain(formation_exp)_embedder(graphnetwork)_lr(0.0005)_batch_size(256)_hidden(256)_seed(0)_.pt", map_location = device)
+    checkpoint = torch.load("/home/thorben/code/mit/Retrieval-Retro/checkpoints/nre/nre_pretrain_only_on_materials_project_formation_energy/model_best_mae_0.1883.pt", map_location = device)
     model.load_state_dict(checkpoint['model_state_dict'], strict=True)
     print(f'\nModel Weight Loaded')
 
@@ -149,7 +149,7 @@ def main():
 
         # Add periodic checkpointing
         if args.checkpoint_interval > 0 and (epoch + 1) % args.checkpoint_interval == 0:
-            save_dir = './checkpoints/nre/'
+            save_dir = './checkpoints/mit_nre_finetune_experimental_formation_energy/'
             os.makedirs(save_dir, exist_ok=True)
             checkpoint = {
                 'epoch': epoch + 1,
@@ -193,7 +193,7 @@ def main():
                     f.write("best MAE : {:.4f} \n".format(test_mae))
                     
                     # Save model checkpoint
-                    save_dir = './checkpoints/nre/'
+                    save_dir = './checkpoints/nre/mit_nre_finetune_experimental_formation_energy/'
                     os.makedirs(save_dir, exist_ok=True)
                     checkpoint = {
                         'epoch': best_epoch,

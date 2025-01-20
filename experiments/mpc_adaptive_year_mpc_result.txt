@@ -1,0 +1,71 @@
+
+Early stop!!
+loss(adaptive)_lb(one)_split(year)_input_dim(83)_seed(0)_lr(0.0005)_batch_size(32)_hidden_dim(64)_embedder(mpc)_
+best epoch : 150
+best Top-1 ACC  MULTI: 0.1349
+best Top-3 ACC MULTI: 0.1492
+best Top-5 ACC MULTI: 0.1538
+best Top-10 ACC MULTI: 0.1624
+best Micro Recall: 0.1267
+best Macro Recall: 0.1284
+Saved model at epoch 150
+Early stop!!
+loss(adaptive)_lb(one)_split(year)_input_dim(83)_seed(0)_lr(0.01)_batch_size(32)_hidden_dim(64)_embedder(mpc)_
+best epoch : 35
+best Top-1 ACC  MULTI: 0.2324
+best Top-3 ACC MULTI: 0.2499
+best Top-5 ACC MULTI: 0.2595
+best Top-10 ACC MULTI: 0.2738
+best Micro Recall: 0.2166
+best Macro Recall: 0.2218
+Saved model at epoch 60
+Early stop!!
+loss(adaptive)_lb(one)_split(year)_input_dim(83)_seed(0)_lr(0.01)_batch_size(32)_hidden_dim(64)_embedder(mpc)_
+best epoch : 25
+best Top-1 ACC  MULTI: 0.1744
+best Top-3 ACC MULTI: 0.1935
+best Top-5 ACC MULTI: 0.2084
+best Top-10 ACC MULTI: 0.2220
+best Micro Recall: 0.1734
+best Macro Recall: 0.1736
+Saved model at epoch 50
+Early stop!!
+loss(adaptive)_lb(one)_split(year)_input_dim(83)_seed(0)_lr(0.0005)_batch_size(32)_hidden_dim(64)_embedder(mpc)_
+best epoch : 285
+best Top-1 ACC  MULTI: 0.2396
+best Top-3 ACC MULTI: 0.2575
+best Top-5 ACC MULTI: 0.2662
+best Top-10 ACC MULTI: 0.2784
+best Micro Recall: 0.2245
+best Macro Recall: 0.2282
+Saved model at epoch 310
+Early stop!!
+loss(adaptive)_lb(one)_split(year)_input_dim(83)_seed(0)_lr(0.0005)_batch_size(32)_hidden_dim(64)_embedder(mpc)_
+best epoch : 215
+best Top-1 ACC  MULTI: 0.2172
+best Top-3 ACC MULTI: 0.2420
+best Top-5 ACC MULTI: 0.2506
+best Top-10 ACC MULTI: 0.2607
+best Micro Recall: 0.1797
+best Macro Recall: 0.1897
+Saved model at epoch 240
+Early stop!!
+loss(adaptive)_lb(one)_split(year)_input_dim(83)_seed(0)_lr(0.0005)_batch_size(32)_hidden_dim(64)_embedder(mpc)_
+best epoch : 180
+best Top-1 ACC  MULTI: 0.5683
+best Top-3 ACC MULTI: 0.5908
+best Top-5 ACC MULTI: 0.5956
+best Top-10 ACC MULTI: 0.6044
+best Micro Recall: 0.8341
+best Macro Recall: 0.8334
+Saved model at epoch 205
+Early stop!!
+loss(adaptive)_lb(one)_split(year)_input_dim(83)_seed(0)_lr(0.0005)_batch_size(32)_hidden_dim(64)_embedder(mpc)_
+best epoch : 265
+best Top-1 ACC  MULTI: 0.1169
+best Top-3 ACC MULTI: 0.1252
+best Top-5 ACC MULTI: 0.1317
+best Top-10 ACC MULTI: 0.1428
+best Micro Recall: 0.1007
+best Macro Recall: 0.1009
+Saved model at epoch 290

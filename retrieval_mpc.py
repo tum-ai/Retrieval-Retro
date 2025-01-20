@@ -5,14 +5,15 @@ from torch_geometric.loader import DataLoader
 import json
 import torch.nn.functional as F
 from collections import defaultdict
-
+import os
+from models import MPC, MultiLossLayer, CircleLoss
 
 def make_sim_mpc(device):
 
     # Load saved embeddings from trained MPC (Fisrt, you need to train the MPC ,then save the embeddings)
-    load_path_train = f'./dataset/train_year_mpc_embeddings.pt'
-    load_path_valid = f'./dataset/valid_year_mpc_embeddings.pt'
-    load_path_test = f'./dataset/test_year_mpc_embeddings.pt'
+    load_path_train = f'./dataset/mit_mpc_train_year_embeddings.pt'
+    load_path_valid = f'./dataset/mit_mpc_valid_year_embeddings.pt'
+    load_path_test = f'./dataset/mit_mpc_test_year_embeddings.pt'
 
     train_emb = torch.load(load_path_train, map_location = device).squeeze(1)
     valid_emb = torch.load(load_path_valid, map_location = device).squeeze(1)
@@ -68,14 +69,68 @@ def make_retrieved(mode,rank_matrix, k):
             json.dump(candidate_list, f)
 
 
+def extract_embeddings(model_path, device):
+    """Extract embeddings using the saved model."""
+    # Load datasets
+    train_dataset = torch.load('./dataset/mit_impact_dataset_train.pt')
+    valid_dataset = torch.load('./dataset/mit_impact_dataset_val.pt')
+    test_dataset = torch.load('./dataset/mit_impact_dataset_test.pt')
+    
+    # Create dataloaders
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=False)
+    valid_loader = DataLoader(valid_dataset, batch_size=32, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+    
+    # Load checkpoint
+    checkpoint = torch.load(model_path, map_location=device)
+    args = checkpoint['args']
+    
+    # Get dimensions from args
+    input_dim = args.input_dim
+    hidden_dim = args.hidden_dim
+    output_dim = train_dataset[0].y_multiple.shape[1]  # Same as in training
+    
+    print(f"Model dimensions from args - input: {input_dim}, hidden: {hidden_dim}, output: {output_dim}")
+    
+    # Initialize model with correct dimensions
+    model = MPC(input_dim, hidden_dim, output_dim, device).to(device)
+    
+    # Load state dict
+    model.load_state_dict(checkpoint['model_state_dict'])
+    model.eval()
+    
+    # Extract embeddings
+    embeddings = {}
+    for name, loader in [('train', train_loader), ('valid', valid_loader), ('test', test_loader)]:
+        all_emb = []
+        with torch.no_grad():
+            for batch in loader:
+                batch = batch.to(device)
+                _, emb, _ = model(batch, None)
+                all_emb.append(emb)
+        embeddings[name] = torch.cat(all_emb, dim=0)
+        torch.save(embeddings[name], f'./dataset/mit_mpc_{name}_year_embeddings.pt')
+        print(f"Saved {name} embeddings with shape: {embeddings[name].shape}")
+    
+    return embeddings
 
 def main():
+    # Check available GPUs
+    if torch.cuda.is_available():
+        n_gpu = torch.cuda.device_count()
+        device = torch.device(f'cuda:{n_gpu-1}' if n_gpu > 0 else 'cpu')
+    else:
+        device = torch.device('cpu')
+    
+    print(f"Using device: {device}")
+    if torch.cuda.is_available():
+        torch.cuda.set_device(device)
 
-
-    device = torch.device(f'cuda:{6}' if torch.cuda.is_available() else 'cpu')
-    torch.cuda.set_device(device)
-    print(device)
-
+    # Extract embeddings first
+    model_path = './checkpoints/mpc/early_stop_model_epoch_240_0.0005_our_data_True.pt'
+    embeddings = extract_embeddings(model_path, device)
+    
+    # Then continue with similarity computation
     make_sim_mpc(device)
 
     yr_mpc_train = torch.load(f"./dataset/train_year_mpc_cos_sim_matrix.pt", map_location=device)
