@@ -185,7 +185,6 @@ def main():
     # Stack the differences and add a large value to the diagonal
     valid_matrix = torch.stack(valid_idx) 
     torch.save(valid_matrix, f'./dataset/nre/{args.difficulty}/optimized_{args.split}_valid_formation_energy_calculation_delta_G.pt')
-
     make_retrieved('valid','year', valid_matrix, K, 0, args.difficulty)
 
     # For Test
@@ -199,7 +198,6 @@ def main():
     # Stack the differences and add a large value to the diagonal
     test_matrix = torch.stack(test_idx) 
     torch.save(test_matrix, f'./dataset/nre/{args.difficulty}/optimized_{args.split}_test_formation_energy_calculation_delta_G.pt')
-
     make_retrieved('test','year', test_matrix, K, 0, args.difficulty)
 
 

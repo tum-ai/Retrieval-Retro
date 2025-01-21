@@ -4,19 +4,20 @@ import numpy as np
 from torch_geometric.loader import DataLoader
 import json
 
-device = torch.device(f'cuda:{5}' if torch.cuda.is_available() else 'cpu')
-torch.cuda.set_device(device)
-print(device)
+import utils_main
+
 
 
 def main(mode, K):
+    args = utils_main.parse_args()
+    torch.cuda.set_device(args.device)
 
-    train_dataset = torch.load('./dataset/year/year_train_mpc.pt')
-    valid_dataset = torch.load('./dataset/year/year_valid_mpc.pt')
-    test_dataset = torch.load('./dataset/year/year_test_mpc.pt')
+    train_dataset = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/mit_impact_dataset_train.pt')
+    valid_dataset = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/mit_impact_dataset_val.pt')
+    test_dataset = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/mit_impact_dataset_test.pt')
 
-    save_path = f'./dataset/year_{mode}_mpc_retrieved_{K}'
-    save_path_2 = f'./dataset/year_{mode}_nre_final_retrieved_{K}'
+    save_path = f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/year_{mode}_mpc_retrieved_{K}'
+    save_path_2 = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_{mode}_nre_final_retrieved_{K}'
 
     with open(save_path, "r") as f:
         candi_data = json.load(f)
@@ -70,7 +71,7 @@ def main(mode, K):
         new_data.append(tuple(tmp))
 
 
-    torch.save(new_data, f"./dataset/year_{mode}_final_mpc_nre_K_{K}.pt")
+    torch.save(new_data, f"/home/thorben/code/mit/Retrieval-Retro/dataset/our/{args.difficulty}/year_{mode}_final_mpc_nre_K_{K}.pt")
 
 if __name__ == "__main__":
     from tqdm import tqdm
