@@ -30,10 +30,10 @@ def seed_everything(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-def make_retrieved(mode, split, rank_matrix, k, seed):
+def make_retrieved(mode, split, rank_matrix, k, seed, difficulty):
      
 
-    save_path = f'./dataset/year_{mode}_nre_retrieved_{k}'
+    save_path = f'./dataset/nre/{difficulty}/year_{mode}_nre_retrieved_{k}_{difficulty}'
     
 
     candidate_list = defaultdict(list)
@@ -56,16 +56,16 @@ def main():
     print(device)
     seed_everything(seed=args.seed)
 
-    # precursor_graph = torch.load("./dataset/year_precursor_graph.pt", map_location=device)
+    # precursor_graph = torch.load(f"/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/precursor_graphs_{args.difficulty}.pt", map_location=device)
     # precursor_loader = DataLoader(precursor_graph, batch_size = 1, shuffle=False)
 
-    train_dataset = torch.load('/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_train.pt')
-    valid_dataset = torch.load('/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_val.pt')
-    test_dataset = torch.load('/home/thorben/code/mit/Retrieval-Retro/dataset/mit_impact_dataset_test.pt')
+    train_dataset = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/mit_impact_dataset_train.pt')
+    # valid_dataset = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/mit_impact_dataset_val.pt')
+    # test_dataset = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/mit_impact_dataset_test.pt')
 
-    train_loader = DataLoader(train_dataset, batch_size = 1, shuffle=False)
-    valid_loader = DataLoader(valid_dataset, batch_size = 1)
-    test_loader = DataLoader(test_dataset, batch_size = 1)
+    # train_loader = DataLoader(train_dataset, batch_size = 1, shuffle=False)
+    # valid_loader = DataLoader(valid_dataset, batch_size = 1)
+    # test_loader = DataLoader(test_dataset, batch_size = 1)
 
     print("Dataset Loaded!")
 
@@ -76,121 +76,131 @@ def main():
     output_dim = train_dataset[0].y_multiple.shape[1] #Dataset precursor set dim 
 
     model = GraphNetwork_prop(args.layers, n_atom_feat, n_bond_feat, n_hidden, device).to(device)
-    checkpoint = torch.load("/home/thorben/code/mit/Retrieval-Retro/checkpoints/nre/model_best_mae_0.0698.pt", map_location = device)
+    checkpoint = torch.load("/home/thorben/code/mit/Retrieval-Retro/checkpoints/nre/mit_nre_finetune_experimental_formation_energy/model_best_mae_0.0759.pt", map_location = device)
     model.load_state_dict(checkpoint['model_state_dict'], strict=True)
     print(f'\nModel Weight Loaded')
 
 
-    ### Calculating formation energy for precursor graph ###
+    # ### Calculating formation energy for precursor graph ###
 
-    precursor_formation_list = []
-    train_formation_list = []
-    valid_formation_list = []
-    test_formation_list = []
+    # precursor_formation_list = []
+    # train_formation_list = []
+    # valid_formation_list = []
+    # test_formation_list = []
 
-    model.eval()
-    with torch.no_grad():
+    # model.eval()
+    # with torch.no_grad():
 
-        # for bc, batch in enumerate(precursor_loader):
-        #     batch.to(device)
+    #     for bc, batch in enumerate(precursor_loader):
+    #         batch.to(device)
 
-        #     y,_ = model(batch)
+    #         y,_ = model(batch)
 
-        #     precursor_formation_list.append(y)
-        # precursor_y_tensor = torch.stack(precursor_formation_list)
-        # torch.save(precursor_y_tensor, f'./dataset/{args.split}_precursor_formation_energy.pt')
+    #         precursor_formation_list.append(y)
+    #     precursor_y_tensor = torch.stack(precursor_formation_list)
+    #     torch.save(precursor_y_tensor, f'./dataset/nre/{args.difficulty}/mit_{args.split}_precursor_formation_energy.pt')
 
-        for bc, batch in enumerate(train_loader):
-            batch.to(device)
+    #     for bc, batch in enumerate(train_loader):
+    #         batch.to(device)
 
-            y,_ = model(batch)
+    #         y,_ = model(batch)
 
-            train_formation_list.append(y)
-        train_y_tensor = torch.stack(train_formation_list)
-        torch.save(train_y_tensor, f'./dataset/mit_{args.split}_train_formation_energy.pt')
+    #         train_formation_list.append(y)
+    #     train_y_tensor = torch.stack(train_formation_list)
+    #     torch.save(train_y_tensor, f'./dataset/nre/{args.difficulty}/mit_{args.split}_train_formation_energy.pt')
 
-        for bc, batch in enumerate(valid_loader):
-            batch.to(device)
+    #     for bc, batch in enumerate(valid_loader):
+    #         batch.to(device)
 
-            y,_ = model(batch)
+    #         y,_ = model(batch)
 
-            valid_formation_list.append(y)
-        valid_y_tensor = torch.stack(valid_formation_list)
-        torch.save(valid_y_tensor, f'./dataset/mit_{args.split}_valid_formation_energy.pt')
+    #         valid_formation_list.append(y)
+    #     valid_y_tensor = torch.stack(valid_formation_list)
+    #     torch.save(valid_y_tensor, f'./dataset/nre/{args.difficulty}/mit_{args.split}_valid_formation_energy.pt')
 
-        for bc, batch in enumerate(test_loader):
-            batch.to(device)
+    #     for bc, batch in enumerate(test_loader):
+    #         batch.to(device)
 
-            y,_ = model(batch)
+    #         y,_ = model(batch)
 
-            test_formation_list.append(y)
-        test_y_tensor = torch.stack(test_formation_list)
-        torch.save(test_y_tensor, f'./dataset/mit_{args.split}_test_formation_energy.pt')
+    #         test_formation_list.append(y)
+    #     test_y_tensor = torch.stack(test_formation_list)
+    #     torch.save(test_y_tensor, f'./dataset/nre/{args.difficulty}/mit_{args.split}_test_formation_energy.pt')
     
-    precursor_formation_y = torch.load('./dataset/year_precursor_formation_energy.pt',map_location=device)
-    train_formation_y = torch.load('./dataset/year_train_formation_energy.pt', map_location=device)
-    valid_formation_y = torch.load('./dataset/year_valid_formation_energy.pt', map_location=device)
-    test_formation_y = torch.load('./dataset/year_test_formation_energy.pt', map_location=device)
+    precursor_formation_y = torch.load(f'./dataset/nre/{args.difficulty}/mit_{args.split}_precursor_formation_energy.pt', map_location=device)
+    train_formation_y = torch.load(f'./dataset/nre/{args.difficulty}/mit_{args.split}_train_formation_energy.pt', map_location=device)
+    valid_formation_y = torch.load(f'./dataset/nre/{args.difficulty}/mit_{args.split}_valid_formation_energy.pt', map_location=device)
+    test_formation_y = torch.load(f'./dataset/nre/{args.difficulty}/mit_{args.split}_test_formation_energy.pt', map_location=device)
     K = args.K
 
-    # For Train
-    train_idx = []
+    train_energies = []
+    for i, db in enumerate(train_dataset):
+        precursor_indices = db.y_lb_one.nonzero(as_tuple=False).squeeze()
+        precursor_energies = precursor_formation_y[precursor_indices].sum()
+        train_energies.append(precursor_energies)
+    
+    train_energies = torch.tensor(train_energies).to(device)
 
+    
+    # For Train
+
+    train_idx = []
     # Compute formation energy differences
     for data in tqdm(train_formation_y):
-        precursor_differences = torch.zeros(len(train_dataset))
-        for j, db in enumerate(train_dataset):
-            precursor_indices = db.y_lb_one.nonzero(as_tuple=False).squeeze()
-            precursor_energies = precursor_formation_y[precursor_indices]
-            differences = data - (precursor_energies).sum() 
-            precursor_differences[j] = differences.item()
-
+        precursor_differences = data - train_energies
         train_idx.append(precursor_differences)
 
-    # Stack the differences and add a large value to the diagonal
-    train_matrix = torch.stack(train_idx) + torch.eye(len(train_dataset)) * 100000
-    torch.save(train_matrix, f'./dataset/{args.split}_train_formation_energy_calculation_delta_G.pt')
-    make_retrieved('train','year', train_matrix, K, 0)
+    # Process in chunks of 500 to save memory
+    chunk_size = 5
+    num_chunks = (len(train_formation_y) + chunk_size - 1) // chunk_size
+    train_matrix = None
+    # Process chunks
+    for i in tqdm(range(num_chunks)):
+        start_idx = i * chunk_size
+        end_idx = min((i + 1) * chunk_size, len(train_idx))
+        chunk = torch.cat(train_idx[start_idx:end_idx], dim=0)
+        # Add diagonal elements only for this chunk
+        diag_mask = torch.zeros(end_idx - start_idx, len(train_dataset), device=device)
+        for j in range(end_idx - start_idx):
+            if start_idx + j < len(train_dataset):
+                diag_mask[j, start_idx + j] = 100000
+        chunk = chunk + diag_mask
+        if train_matrix is None:
+            train_matrix = chunk
+        else:
+            train_matrix = torch.cat((train_matrix, chunk), dim=0)
+
+    torch.save(train_matrix, f'./dataset/nre/{args.difficulty}/optimized_{args.split}_train_formation_energy_calculation_delta_G.pt')
+    make_retrieved('train','year', train_matrix, K, 0, args.difficulty)
 
     # For Valid
     valid_idx = []
 
     # Compute formation energy differences
     for data in tqdm(valid_formation_y):
-        precursor_differences = torch.zeros(len(train_dataset))
-        for j, db in enumerate(train_dataset):
-            precursor_indices = db.y_lb_one.nonzero(as_tuple=False).squeeze()
-            precursor_energies = precursor_formation_y[precursor_indices]
-            differences = data - (precursor_energies).sum()
-            precursor_differences[j] = differences.item()
-
+        precursor_differences = data - train_energies
         valid_idx.append(precursor_differences)
+
 
     # Stack the differences and add a large value to the diagonal
     valid_matrix = torch.stack(valid_idx) 
-    torch.save(valid_matrix, f'./dataset/{args.split}_valid_formation_energy_calculation_delta_G.pt')
+    torch.save(valid_matrix, f'./dataset/nre/{args.difficulty}/optimized_{args.split}_valid_formation_energy_calculation_delta_G.pt')
 
-    make_retrieved('valid','year', valid_matrix, K, 0)
+    make_retrieved('valid','year', valid_matrix, K, 0, args.difficulty)
 
     # For Test
     test_idx = []
 
     # Compute formation energy differences
     for data in tqdm(test_formation_y):
-        precursor_differences = torch.zeros(len(train_dataset))
-        for j, db in enumerate(train_dataset):
-            precursor_indices = db.y_lb_one.nonzero(as_tuple=False).squeeze()
-            precursor_energies = precursor_formation_y[precursor_indices]
-            differences = data - (precursor_energies).sum()
-            precursor_differences[j] = differences.item()
-
-        test_idx.append(precursor_differences)
+        precursor_differences = data - train_energies
+        test_idx.append(precursor_differences)  
 
     # Stack the differences and add a large value to the diagonal
     test_matrix = torch.stack(test_idx) 
-    torch.save(test_matrix, f'./dataset/{args.split}_test_formation_energy_calculation_delta_G.pt')
+    torch.save(test_matrix, f'./dataset/nre/{args.difficulty}/optimized_{args.split}_test_formation_energy_calculation_delta_G.pt')
 
-    make_retrieved('test','year', test_matrix, K, 0)
+    make_retrieved('test','year', test_matrix, K, 0, args.difficulty)
 
 
 

@@ -7,13 +7,13 @@ import torch.nn.functional as F
 from collections import defaultdict
 import os
 from models import MPC, MultiLossLayer, CircleLoss
-
-def make_sim_mpc(device):
+import utils_main
+def make_sim_mpc(device, difficulty):
 
     # Load saved embeddings from trained MPC (Fisrt, you need to train the MPC ,then save the embeddings)
-    load_path_train = f'./dataset/mit_mpc_train_year_embeddings.pt'
-    load_path_valid = f'./dataset/mit_mpc_valid_year_embeddings.pt'
-    load_path_test = f'./dataset/mit_mpc_test_year_embeddings.pt'
+    load_path_train = f'./dataset/our_mpc/{difficulty}/mit_mpc_train_year_embeddings.pt'
+    load_path_valid = f'./dataset/our_mpc/{difficulty}/mit_mpc_valid_year_embeddings.pt'
+    load_path_test = f'./dataset/our_mpc/{difficulty}/mit_mpc_test_year_embeddings.pt'
 
     train_emb = torch.load(load_path_train, map_location = device).squeeze(1)
     valid_emb = torch.load(load_path_valid, map_location = device).squeeze(1)
@@ -30,14 +30,14 @@ def make_sim_mpc(device):
     diag_mask = torch.ones_like(cos_sim_train).to(device) - torch.eye(cos_sim_train.size(0), dtype=torch.float32).to(device)
     cos_sim_train= cos_sim_train * diag_mask
 
-    torch.save(cos_sim_train, f"./dataset/train_year_mpc_cos_sim_matrix.pt")
-    torch.save(cos_sim_valid, f"./dataset/valid_year_mpc_cos_sim_matrix.pt")
-    torch.save(cos_sim_test, f"./dataset/test_year_mpc_cos_sim_matrix.pt")
+    torch.save(cos_sim_train, f"./dataset/our_mpc/{difficulty}/train_year_mpc_cos_sim_matrix.pt")
+    torch.save(cos_sim_valid, f"./dataset/our_mpc/{difficulty}/valid_year_mpc_cos_sim_matrix.pt")
+    torch.save(cos_sim_test, f"./dataset/our_mpc/{difficulty}/test_year_mpc_cos_sim_matrix.pt")
 
     print(f'cosine similarity matrix mpc saving completed')
 
 
-def compute_rank_in_batches(tensor, batch_size):
+def compute_rank_in_batches(tensor, batch_size, difficulty):
 
     # Zeros for the ranked tensor
     ranked_tensor = torch.zeros_like(tensor)
@@ -55,9 +55,9 @@ def compute_rank_in_batches(tensor, batch_size):
     
     return ranked_tensor
 
-def make_retrieved(mode,rank_matrix, k):
+def make_retrieved(mode,rank_matrix, k, difficulty):
      
-    save_path = f'./dataset/year_{mode}_mpc_retrieved_{k}'
+    save_path = f'./dataset/our_mpc/{difficulty}/year_{mode}_mpc_retrieved_{k}'
 
     candidate_list = defaultdict(list)
 
@@ -69,12 +69,12 @@ def make_retrieved(mode,rank_matrix, k):
             json.dump(candidate_list, f)
 
 
-def extract_embeddings(model_path, device):
+def extract_embeddings(model_path, device, difficulty):
     """Extract embeddings using the saved model."""
     # Load datasets
-    train_dataset = torch.load('./dataset/mit_impact_dataset_train.pt')
-    valid_dataset = torch.load('./dataset/mit_impact_dataset_val.pt')
-    test_dataset = torch.load('./dataset/mit_impact_dataset_test.pt')
+    train_dataset = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{difficulty}/mit_impact_dataset_train.pt')
+    valid_dataset = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{difficulty}/mit_impact_dataset_val.pt')
+    test_dataset = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{difficulty}/mit_impact_dataset_test.pt')
     
     # Create dataloaders
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=False)
@@ -109,12 +109,14 @@ def extract_embeddings(model_path, device):
                 _, emb, _ = model(batch, None)
                 all_emb.append(emb)
         embeddings[name] = torch.cat(all_emb, dim=0)
-        torch.save(embeddings[name], f'./dataset/mit_mpc_{name}_year_embeddings.pt')
+        torch.save(embeddings[name], f'./dataset/our_mpc/{difficulty}/mit_mpc_{name}_year_embeddings.pt')
         print(f"Saved {name} embeddings with shape: {embeddings[name].shape}")
     
     return embeddings
 
 def main():
+
+    args = utils_main.parse_args()
     # Check available GPUs
     if torch.cuda.is_available():
         n_gpu = torch.cuda.device_count()
@@ -127,22 +129,22 @@ def main():
         torch.cuda.set_device(device)
 
     # Extract embeddings first
-    model_path = './checkpoints/mpc/early_stop_model_epoch_240_0.0005_our_data_True.pt'
-    embeddings = extract_embeddings(model_path, device)
+    model_path = "/home/thorben/code/mit/Retrieval-Retro/checkpoints/mpc/early_stop_model_epoch_290_0.0005_our_data_hard.pt"
+    embeddings = extract_embeddings(model_path, device, args.difficulty)
     
     # Then continue with similarity computation
-    make_sim_mpc(device)
+    make_sim_mpc(device, args.difficulty)
 
-    yr_mpc_train = torch.load(f"./dataset/train_year_mpc_cos_sim_matrix.pt", map_location=device)
-    yr_mpc_valid = torch.load(f"./dataset/valid_year_mpc_cos_sim_matrix.pt", map_location=device)
-    yr_mpc_test = torch.load(f"./dataset/test_year_mpc_cos_sim_matrix.pt", map_location=device)
+    yr_mpc_train = torch.load(f"./dataset/our_mpc/{args.difficulty}/train_year_mpc_cos_sim_matrix.pt", map_location=device)
+    yr_mpc_valid = torch.load(f"./dataset/our_mpc/{args.difficulty}/valid_year_mpc_cos_sim_matrix.pt", map_location=device)
+    yr_mpc_test = torch.load(f"./dataset/our_mpc/{args.difficulty}/test_year_mpc_cos_sim_matrix.pt", map_location=device)
 
     batch_size = 1000
-    rank_mpc_train = compute_rank_in_batches(yr_mpc_train, batch_size)
+    rank_mpc_train = compute_rank_in_batches(yr_mpc_train, batch_size, args.difficulty)
 
-    rank_mpc_valid = compute_rank_in_batches(yr_mpc_valid, batch_size)
+    rank_mpc_valid = compute_rank_in_batches(yr_mpc_valid, batch_size, args.difficulty)
 
-    rank_mpc_test = compute_rank_in_batches(yr_mpc_test, batch_size)
+    rank_mpc_test = compute_rank_in_batches(yr_mpc_test, batch_size, args.difficulty)
 
     rank_matrix_list = [rank_mpc_train, rank_mpc_valid, rank_mpc_test]
 
@@ -158,7 +160,7 @@ def main():
         elif idx == 2:
             mode = 'test'
 
-        make_retrieved(mode, matrix, 3)
+        make_retrieved(mode, matrix, 3, args.difficulty)
 
 
 if __name__ == "__main__":

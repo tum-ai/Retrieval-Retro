@@ -33,26 +33,26 @@ def seed_everything(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-# def make_retrieved(mode, split, rank_matrix, k, seed):
+def make_retrieved(mode, split, rank_matrix, k, seed):
      
 
-#     save_path = f'./output/new_retrieved_formation/sum_again_fast_0502_year_{mode}_seed_{seed}_retrieved_{k}'
+    save_path = f'./output/new_retrieved_formation/sum_again_fast_0502_year_{mode}_seed_{seed}_retrieved_{k}'
     
 
-#     candidate_list = defaultdict(list)
+    candidate_list = defaultdict(list)
 
-#     for idx, sim_row in enumerate(rank_matrix):
-#         top_k_val, top_k_idx = torch.topk(sim_row, k, largest=False)
-#         candidate_list[idx] = top_k_idx.tolist()
+    for idx, sim_row in enumerate(rank_matrix):
+        top_k_val, top_k_idx = torch.topk(sim_row, k, largest=False)
+        candidate_list[idx] = top_k_idx.tolist()
 
-#     with open(save_path, 'w') as f:
-#             json.dump(candidate_list, f)
+    with open(save_path, 'w') as f:
+            json.dump(candidate_list, f)
 
 def main():
     args = utils_main.parse_args()
     train_config = utils_main.training_config(args)
-    configuration = utils_main.exp_get_name1(train_config)
-    print(f'configuration: {configuration}')
+    # configuration = utils_main.exp_get_name1(train_config)
+    # print(f'configuration: {configuration}')
 
     K = args.K
     device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else 'cpu')
@@ -60,9 +60,9 @@ def main():
     print(device)
     seed_everything(seed=args.seed)
 
-    nre_train = f'./dataset/year_train_nre_retrieved_{K}'
-    nre_valid = f'./dataset/year_valid_nre_retrieved_{K}'
-    nre_test = f'./dataset/year_test_nre_retrieved_{K}'
+    nre_train = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_train_nre_retrieved_{K}_{args.difficulty}'
+    nre_valid = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_valid_nre_retrieved_{K}_{args.difficulty}'
+    nre_test = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_test_nre_retrieved_{K}_{args.difficulty}'
 
     with open(nre_train, 'r') as f:
         reaction_train = json.load(f)
@@ -74,9 +74,9 @@ def main():
         reaction_test = json.load(f)
 
 
-    mpc_train = f'./dataset/year_train_mpc_retrieved_{K}'
-    mpc_valid = f'./dataset/year_valid_mpc_retrieved_{K}'
-    mpc_test = f'./dataset/year_test_mpc_retrieved_{K}'
+    mpc_train = f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/year_train_mpc_retrieved_{K}'
+    mpc_valid = f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/year_valid_mpc_retrieved_{K}'
+    mpc_test = f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/year_test_mpc_retrieved_{K}'
 
 
     with open(mpc_train, 'r') as f:
@@ -104,7 +104,7 @@ def main():
 
         reaction_mpc_train[idx] = reaction[:K]
     
-    save_path = f'./dataset/year_train_nre_final_retrieved_{K}'
+    save_path = f'/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_train_nre_final_retrieved_{K}'
     with open(save_path, 'w') as f:
         json.dump(reaction_mpc_train, f)
 
@@ -122,7 +122,7 @@ def main():
             reaction.extend(mpc[:shortage])
         reaction_mpc_valid[idx] = reaction[:K]
     
-    save_path = f'./dataset/year_valid_nre_final_retrieved_{K}'
+    save_path = f'/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_valid_nre_final_retrieved_{K}'
     with open(save_path, 'w') as f:
         json.dump(reaction_mpc_valid, f)
 
@@ -142,7 +142,7 @@ def main():
 
         reaction_mpc_test[idx] = reaction[:K]
 
-    save_path = f'./dataset/year_test_nre_final_retrieved_{K}'
+    save_path = f'/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_test_nre_final_retrieved_{K}'
     with open(save_path, 'w') as f:
         json.dump(reaction_mpc_test, f)
 
