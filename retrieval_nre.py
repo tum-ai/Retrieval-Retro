@@ -60,9 +60,9 @@ def main():
     print(device)
     seed_everything(seed=args.seed)
 
-    nre_train = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_train_nre_retrieved_{K}_{args.difficulty}'
-    nre_valid = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_valid_nre_retrieved_{K}_{args.difficulty}'
-    nre_test = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_test_nre_retrieved_{K}_{args.difficulty}'
+    nre_train = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_train_nre_retrieved_{K}_marco.json'
+    nre_valid = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_valid_nre_retrieved_{K}_marco.json'
+    nre_test = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_test_nre_retrieved_{K}_marco.json'
 
     with open(nre_train, 'r') as f:
         reaction_train = json.load(f)
@@ -91,7 +91,7 @@ def main():
 
     reaction_mpc_train = defaultdict(list)
 
-    for idx, (reaction, mpc) in enumerate(zip(reaction_train, mpc_train.values())):
+    for idx, (reaction, mpc) in enumerate(zip(reaction_train.values(), mpc_train.values())):
         
         if reaction is None:
             reaction = []
@@ -104,13 +104,13 @@ def main():
 
         reaction_mpc_train[idx] = reaction[:K]
     
-    save_path = f'/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_train_nre_final_retrieved_{K}'
+    save_path = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_train_nre_final_retrieved_{K}'
     with open(save_path, 'w') as f:
         json.dump(reaction_mpc_train, f)
 
     reaction_mpc_valid = defaultdict(list)
 
-    for idx, (reaction, mpc) in enumerate(zip(reaction_valid, mpc_valid.values())):
+    for idx, (reaction, mpc) in enumerate(zip(reaction_valid.values(), mpc_valid.values())):
         
         if reaction is None:
             reaction = []
@@ -122,13 +122,13 @@ def main():
             reaction.extend(mpc[:shortage])
         reaction_mpc_valid[idx] = reaction[:K]
     
-    save_path = f'/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_valid_nre_final_retrieved_{K}'
+    save_path = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_valid_nre_final_retrieved_{K}'
     with open(save_path, 'w') as f:
         json.dump(reaction_mpc_valid, f)
 
     reaction_mpc_test = defaultdict(list)
 
-    for idx, (reaction, mpc) in enumerate(zip(reaction_test, mpc_test.values())):
+    for idx, (reaction, mpc) in enumerate(zip(reaction_test.values(), mpc_test.values())):
         
         if reaction is None:
             reaction = []
@@ -142,7 +142,7 @@ def main():
 
         reaction_mpc_test[idx] = reaction[:K]
 
-    save_path = f'/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_test_nre_final_retrieved_{K}'
+    save_path = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_test_nre_final_retrieved_{K}'
     with open(save_path, 'w') as f:
         json.dump(reaction_mpc_test, f)
 
