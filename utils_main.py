@@ -125,6 +125,7 @@ def parse_args():
     parser.add_argument("--K", type=int, default=3, help="Number of Candidates")
     parser.add_argument("--kb", type=int, default = None, help = 'Knowledge Base')
     parser.add_argument("--difficulty", type=str, default = 'hard', help = 'Difficulty')
+    parser.add_argument("--save_interval", type=int, default = 50, help = 'Save Interval')
 
     return parser.parse_args()
 

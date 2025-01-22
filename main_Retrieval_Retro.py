@@ -64,7 +64,7 @@ def main():
     print(device)
     seed_everything(seed=args.seed)
 
-
+    args.save_interval = 1
     args.eval = 5
     args.retrieval = 'ours'
     args.split = 'year'
@@ -91,7 +91,7 @@ def main():
     t_layers_sa = args.t_layers_sa
     thres = 'normal'
 
-    f = open(f"./experiments/Retrieval_Retro_{args.batch_size}_{args.retrieval}_{args.embedder}_{args.split}_{args.K}_result.txt", "a")
+    f = open(f"/home/thorben/code/mit/Retrieval-Retro/experiments/Retrieval_Retro_{args.difficulty}_{args.batch_size}_{args.lr}_{args.seed}_result.txt", "a")
 
     if embedder == 'Retrieval_Retro': 
         model = Retrieval_Retro(gnn, layers, input_dim, output_dim, hidden_dim, n_bond_feat, device, t_layers, t_layers_sa, num_heads).to(device)
@@ -127,6 +127,7 @@ def main():
 
             sys.stdout.write(f'\r[ epoch {epoch+1}/{args.epochs} | batch {bc}/{num_batch} ] Total Loss : {(train_loss/(bc+1)):.4f}')
             sys.stdout.flush()
+
 
         if (epoch + 1) % args.eval == 0 :
             model.eval()
@@ -228,27 +229,75 @@ def main():
                         print(f'\n Test_multi | Epoch: {epoch+1} | Top-1 ACC: {multi_top_1_acc:.4f} | Top-3 ACC: {multi_top_3_acc:.4f} | Top-5 ACC: {multi_top_5_acc:.4f} | Top-10 ACC: {multi_top_10_acc:.4f} ')
                         print(f'\n Test Recall | Epoch: {epoch+1} | Micro_Recall: {test_micro:.4f} | Macro_Recall: {test_macro:.4f} ')
 
+                    best_acc_list.append(multi_top_5_acc)
+                    best_state_multi = f'[Best epoch: {best_epoch}] | Top-1 ACC: {multi_top_1_acc:.4f} | Top-3 ACC: {multi_top_3_acc:.4f} | Top-5 ACC: {multi_top_5_acc:.4f} | Top-10 ACC: {multi_top_10_acc:.4f}'
+                    best_state_recall = f'[Best epoch: {best_epoch}] | Micro Recall: {test_micro:.4f} | Macro Recall: {test_macro:.4f}'
 
-                best_acc_list.append(multi_top_5_acc)
-                best_state_multi = f'[Best epoch: {best_epoch}] | Top-1 ACC: {multi_top_1_acc:.4f} | Top-3 ACC: {multi_top_3_acc:.4f} | Top-5 ACC: {multi_top_5_acc:.4f} | Top-10 ACC: {multi_top_10_acc:.4f}'
-                best_state_recall = f'[Best epoch: {best_epoch}] | Micro Recall: {test_micro:.4f} | Macro Recall: {test_macro:.4f}'
+                    if len(best_acc_list) > int(args.es / args.eval):
+                        if best_acc_list[-1] == best_acc_list[-int(args.es / args.eval)]:
+                            print(f'!!Early Stop!!')
+                            print(f'[FINAL]_MULTI: {best_state_multi}')
+                            print(f'[FINAL]_MULTI: {best_state_recall}')
+                            f.write("\n")
+                            f.write("Early stop!!\n")
+                            f.write(configuration)
+                            f.write(f"\nbest epoch : {best_epoch}")
+                            f.write(f"\nbest Top-1 ACC  MULTI: {multi_top_1_acc:.4f}")
+                            f.write(f"\nbest Top-3 ACC MULTI: {multi_top_3_acc:.4f}")
+                            f.write(f"\nbest Top-5 ACC MULTI: {multi_top_5_acc:.4f}")
+                            f.write(f"\nbest Top-10 ACC MULTI: {multi_top_10_acc:.4f}")
+                            f.write(f"\nbest Micro Recall: {test_micro:.4f}")
+                            f.write(f"\nbest Macro Recall: {test_macro:.4f}")
+                            
+                            # Save model at early stopping
+                            save_path = f'checkpoints/RR/{args.difficulty}/early_stopping_epoch{best_epoch}_top5_acc_{multi_top_5_acc:.4f}.pt'
+                            torch.save({
+                                'epoch': best_epoch,
+                                'args': args,
+                                'model_state_dict': model.state_dict(),
+                                'top1_acc': multi_top_1_acc,
+                                'top3_acc': multi_top_3_acc, 
+                                'top5_acc': multi_top_5_acc,
+                                'top10_acc': multi_top_10_acc,
+                                'micro_recall': test_micro,
+                                'macro_recall': test_macro
+                            }, save_path)
+                            print(f'Model and metrics saved to {save_path}')                           
+                            sys.exit()
 
-                if len(best_acc_list) > int(args.es / args.eval):
-                    if best_acc_list[-1] == best_acc_list[-int(args.es / args.eval)]:
-                        print(f'!!Early Stop!!')
-                        print(f'[FINAL]_MULTI: {best_state_multi}')
-                        print(f'[FINAL]_MULTI: {best_state_recall}')
-                        f.write("\n")
-                        f.write("Early stop!!\n")
-                        f.write(configuration)
-                        f.write(f"\nbest epoch : {best_epoch}")
-                        f.write(f"\nbest Top-1 ACC  MULTI: {multi_top_1_acc:.4f}")
-                        f.write(f"\nbest Top-3 ACC MULTI: {multi_top_3_acc:.4f}")
-                        f.write(f"\nbest Top-5 ACC MULTI: {multi_top_5_acc:.4f}")
-                        f.write(f"\nbest Top-10 ACC MULTI: {multi_top_10_acc:.4f}")
-                        f.write(f"\nbest Micro Recall: {test_micro:.4f}")
-                        f.write(f"\nbest Macro Recall: {test_macro:.4f}")
-                        sys.exit()
+                    # Save model at regular intervals
+                if (epoch + 1) % args.save_interval == 0:
+
+                    with torch.no_grad():
+                        for bc, batch in enumerate(test_loader):
+
+                            template_output = model(batch)
+
+                            assert batch[0].y_multiple_len.sum().item() == batch[0].y_multiple.size(0)
+
+                            absolute_indices = torch.cat([torch.tensor([0]).to(device), torch.cumsum(batch[0].y_multiple_len, dim=0)])
+                            split_tensors = [batch[0].y_multiple[start:end] for start, end in zip(absolute_indices[:-1], absolute_indices[1:])]
+
+                            multi_label = batch[0].y_multiple
+
+
+                    results_data = {
+
+                    }
+
+                    interval_save_path = f'checkpoints/RR/{args.difficulty}/epoch{epoch+1}_top5_acc_{multi_top_5_acc:.4f}.pt'
+                    torch.save({
+                        'epoch': epoch + 1,
+                        'args': args,
+                        'model_state_dict': model.state_dict(),
+                        'top1_acc': multi_top_1_acc,
+                        'top3_acc': multi_top_3_acc,
+                        'top5_acc': multi_top_5_acc, 
+                        'top10_acc': multi_top_10_acc,
+                        'micro_recall': test_micro,
+                        'macro_recall': test_macro
+                    }, interval_save_path)
+                    print(f'Model and metrics saved to {interval_save_path}')
 
 
     print(f'Training Done not early stopping')
