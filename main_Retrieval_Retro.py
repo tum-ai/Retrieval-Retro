@@ -249,6 +249,9 @@ def main():
                             f.write(f"\nbest Micro Recall: {test_micro:.4f}")
                             f.write(f"\nbest Macro Recall: {test_macro:.4f}")
 
+                            results_list_of_dics = []
+                            precursor_lookup = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/precursor_lookup.json',map_location=device)
+
                             # Sort probabilities and get corresponding indices for each sample
                             sorted_probs, sorted_indices = torch.sort(template_output, dim=1, descending=True)
                             
