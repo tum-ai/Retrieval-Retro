@@ -69,9 +69,9 @@ def main():
     args.retrieval = 'ours'
     args.split = 'year'
 
-    train_dataset = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our/{args.difficulty}/year_train_final_mpc_nre_K_3.pt',map_location=device)
-    valid_dataset = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our/{args.difficulty}/year_valid_final_mpc_nre_K_3.pt',map_location=device)
-    test_dataset = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our/{args.difficulty}/year_test_final_mpc_nre_K_3.pt',map_location=device)
+    train_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_train_final_mpc_nre_K_3.pt',map_location=device)
+    valid_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_valid_final_mpc_nre_K_3.pt',map_location=device)
+    test_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_test_final_mpc_nre_K_3.pt',map_location=device)
 
     train_loader = DataLoader(train_dataset, batch_size = args.batch_size, shuffle=True, collate_fn = custom_collate_fn)
     valid_loader = DataLoader(valid_dataset, batch_size = 1, collate_fn = custom_collate_fn)
@@ -91,7 +91,7 @@ def main():
     t_layers_sa = args.t_layers_sa
     thres = 'normal'
 
-    f = open(f"/home/thorben/code/mit/Retrieval-Retro/experiments/Retrieval_Retro_{args.difficulty}_{args.batch_size}_{args.lr}_{args.seed}_result.txt", "a")
+    f = open(f"./experiments/Retrieval_Retro_{args.difficulty}_{args.batch_size}_{args.lr}_{args.seed}_result.txt", "a")
 
     if embedder == 'Retrieval_Retro': 
         model = Retrieval_Retro(gnn, layers, input_dim, output_dim, hidden_dim, n_bond_feat, device, t_layers, t_layers_sa, num_heads).to(device)
@@ -250,7 +250,8 @@ def main():
                             f.write(f"\nbest Macro Recall: {test_macro:.4f}")
 
                             results_list_of_dics = []
-                            precursor_lookup = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/precursor_lookup.json',map_location=device)
+                            with open(f'./dataset/our_mpc/{args.difficulty}/precursor_lookup.json', 'r') as f:
+                                precursor_lookup = json.load(f)
 
                             # Sort probabilities and get corresponding indices for each sample
                             sorted_probs, sorted_indices = torch.sort(template_output, dim=1, descending=True)
@@ -317,7 +318,8 @@ def main():
             ###############################################################################################################
 
             results_list_of_dics = []
-            precursor_lookup = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/precursor_lookup.json',map_location=device)
+            with open(f'./dataset/our_mpc/{args.difficulty}/precursor_lookup.json', 'r') as f:
+                precursor_lookup = json.load(f)
 
             with torch.no_grad():
                 for bc, batch in enumerate(test_loader):
