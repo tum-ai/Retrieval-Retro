@@ -307,13 +307,13 @@ def main():
         # Save model at regular intervals
         if (epoch + 1) % args.save_interval == 0:
             model.eval()
-            multi_val_top_1_list = []
-            multi_val_top_3_list = []
-            multi_val_top_5_list = []
-            multi_val_top_10_list = []
+            multi_top_1_list = []
+            multi_top_3_list = []
+            multi_top_5_list = []
+            multi_top_10_list = []
 
-            val_micro_rec_list = []
-            val_macro_rec_list = []
+            test_micro_rec_list = []
+            test_macro_rec_list = []
 
             ###############################################################################################################
 
