@@ -1,4 +1,5 @@
 import argparse
+import concurrent.futures
 import torch
 import torch.nn as nn
 import random
@@ -69,9 +70,14 @@ def main():
     args.retrieval = 'ours'
     args.split = 'year'
 
-    train_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_train_final_mpc_nre_K_3.pt',map_location=device)
-    valid_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_valid_final_mpc_nre_K_3.pt',map_location=device)
-    test_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_test_final_mpc_nre_K_3.pt',map_location=device)
+    # Load datasets in parallel using multiple threads
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = [
+            executor.submit(torch.load, f'./dataset/our/{args.difficulty}/year_train_final_mpc_nre_K_3.pt', map_location=device),
+            executor.submit(torch.load, f'./dataset/our/{args.difficulty}/year_valid_final_mpc_nre_K_3.pt', map_location=device), 
+            executor.submit(torch.load, f'./dataset/our/{args.difficulty}/year_test_final_mpc_nre_K_3.pt', map_location=device)
+        ]
+        train_dataset, valid_dataset, test_dataset = [f.result() for f in futures]
 
     train_loader = DataLoader(train_dataset, batch_size = args.batch_size, shuffle=True, collate_fn = custom_collate_fn)
     valid_loader = DataLoader(valid_dataset, batch_size = 1, collate_fn = custom_collate_fn)
@@ -356,21 +362,14 @@ def main():
                     sorted_indices_np = sorted_indices.cpu().numpy()
 
                     # Get ground truth precursor indices for each batch element
-                    y_multiple_ids = batch[0].y_multiple.nonzero(as_tuple=False)[:, 1].cpu()
-                    y_multiple_ids_split = [y_multiple_ids[start:end] for start, end in zip(absolute_indices.cpu()[:-1], absolute_indices.cpu()[1:])]
-                    for gt_ids_multiple in y_multiple_ids_split:
-                        if gt_ids_multiple.size(0) > 0:
-                            gt_precursors = [[precursor_lookup[idx.item()] for idx in gt_id_set] for gt_id_set in gt_ids_multiple]
-                        else:
-                            gt_precursors = [precursor_lookup[idx.item()] for idx in gt_ids_multiple]
+                    gt_ids = batch[0].y_multiple.nonzero(as_tuple=False)[:, 1].cpu().numpy()
 
                     # Create list of dictionaries for each batch element
                     batch_results = []
                     for i in range(len(batch[0].y_string_label)):
-
                         result_dict = {
                             batch[0].y_string_label[i]: {
-                                'gt_precursors': gt_precursors,
+                                'gt_precursors': [precursor_lookup[idx] for idx in gt_ids[i]],
                                 'sorted_candidates': [precursor_lookup[idx] for idx in sorted_indices_np[i]],
                                 'sorted_probabilities': sorted_probs_np[i].tolist()
                             }
