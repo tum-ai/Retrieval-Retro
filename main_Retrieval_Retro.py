@@ -284,8 +284,11 @@ def main():
                             results_list_of_dics.extend(batch_results)
                             
                             # Save model at early stopping
-                            save_path = f'checkpoints/RR/{args.difficulty}/early_stopping_epoch{best_epoch}_top5_acc_{multi_top_5_acc:.4f}_{args.seed}.pt'
-                            save_path_results = f'checkpoints/RR/{args.difficulty}/early_stopping_epoch{best_epoch}_results_{args.seed}.json'
+                            save_dir = f'checkpoints/RR/{args.difficulty}'
+                            os.makedirs(save_dir, exist_ok=True)
+
+                            save_path = f'{save_dir}/early_stopping_epoch{best_epoch}_top5_acc_{multi_top_5_acc:.4f}_{args.seed}.pt'
+                            save_path_results = f'{save_dir}/early_stopping_epoch{best_epoch}_results_{args.seed}.json'
                             torch.save({
                                 'epoch': best_epoch,
                                 'args': args,
@@ -384,8 +387,12 @@ def main():
                 print(f'\n Test Recall | Epoch: {epoch+1} | Micro_Recall: {test_micro:.4f} | Macro_Recall: {test_macro:.4f} ')
 
 
-            interval_save_path = f'checkpoints/RR/{args.difficulty}/epoch{epoch+1}_top5_acc_{multi_top_5_acc:.4f}_{args.seed}.pt'
-            interval_save_path_results = f'checkpoints/RR/{args.difficulty}/epoch{epoch+1}_results_{args.seed}.json'
+            # Create directories if they don't exist
+            save_dir = f'checkpoints/RR/{args.difficulty}'
+            os.makedirs(save_dir, exist_ok=True)
+
+            interval_save_path = f'{save_dir}/epoch{epoch+1}_top5_acc_{multi_top_5_acc:.4f}_{args.seed}.pt'
+            interval_save_path_results = f'{save_dir}/epoch{epoch+1}_results_{args.seed}.json'
             torch.save({
                 'epoch': epoch + 1,
                 'args': args,
