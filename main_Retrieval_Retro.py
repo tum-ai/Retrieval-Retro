@@ -20,7 +20,7 @@ import utils_main
 from utils_main import recall_multilabel_multiple, top_k_acc_multiple
 
 torch.set_num_threads(4)
-os.environ['OMP_NUM_THREADS'] = "4"
+os.environ['OMP_NUM_THREADS'] = "8"
 
 from torch_geometric.data import Batch
 
@@ -267,21 +267,14 @@ def main():
                             sorted_indices_np = sorted_indices.cpu().numpy()
 
                             # Get ground truth precursor indices for each batch element
-                            y_multiple_ids = batch[0].y_multiple.nonzero(as_tuple=False)[:, 1].cpu()
-                            y_multiple_ids_split = [y_multiple_ids[start:end] for start, end in zip(absolute_indices.cpu()[:-1], absolute_indices.cpu()[1:])]
-                            for gt_ids_multiple in y_multiple_ids_split:
-                                if gt_ids_multiple.size(0) > 0:
-                                    gt_precursors = [[precursor_lookup[idx.item()] for idx in gt_id_set] for gt_id_set in gt_ids_multiple]
-                                else:
-                                    gt_precursors = [precursor_lookup[idx.item()] for idx in gt_ids_multiple]
+                            gt_ids = batch[0].y_multiple.nonzero(as_tuple=True)[:, 1].cpu().numpy()
 
                             # Create list of dictionaries for each batch element
                             batch_results = []
                             for i in range(len(batch[0].y_string_label)):
-
                                 result_dict = {
                                     batch[0].y_string_label[i]: {
-                                        'gt_precursors': gt_precursors,
+                                        'gt_precursors': [precursor_lookup[idx] for idx in gt_ids],
                                         'sorted_candidates': [precursor_lookup[idx] for idx in sorted_indices_np[i]],
                                         'sorted_probabilities': sorted_probs_np[i].tolist()
                                     }
@@ -362,14 +355,14 @@ def main():
                     sorted_indices_np = sorted_indices.cpu().numpy()
 
                     # Get ground truth precursor indices for each batch element
-                    gt_ids = batch[0].y_multiple.nonzero(as_tuple=False)[:, 1].cpu().numpy()
+                    gt_ids = batch[0].y_multiple.nonzero(as_tuple=True)[:, 1].cpu().numpy()
 
                     # Create list of dictionaries for each batch element
                     batch_results = []
                     for i in range(len(batch[0].y_string_label)):
                         result_dict = {
                             batch[0].y_string_label[i]: {
-                                'gt_precursors': [precursor_lookup[idx] for idx in gt_ids[i]],
+                                'gt_precursors': [precursor_lookup[idx] for idx in gt_ids],
                                 'sorted_candidates': [precursor_lookup[idx] for idx in sorted_indices_np[i]],
                                 'sorted_probabilities': sorted_probs_np[i].tolist()
                             }
