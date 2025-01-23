@@ -248,13 +248,46 @@ def main():
                             f.write(f"\nbest Top-10 ACC MULTI: {multi_top_10_acc:.4f}")
                             f.write(f"\nbest Micro Recall: {test_micro:.4f}")
                             f.write(f"\nbest Macro Recall: {test_macro:.4f}")
+
+                            # Sort probabilities and get corresponding indices for each sample
+                            sorted_probs, sorted_indices = torch.sort(template_output, dim=1, descending=True)
+                            
+                            # Convert to CPU and numpy for easier handling
+                            sorted_probs_np = sorted_probs.cpu().numpy()
+                            sorted_indices_np = sorted_indices.cpu().numpy()
+
+                            # Get ground truth precursor indices for each batch element
+                            y_multiple_ids = batch[0].y_multiple.nonzero(as_tuple=False)[:, 1].cpu()
+                            y_multiple_ids_split = [y_multiple_ids[start:end] for start, end in zip(absolute_indices.cpu()[:-1], absolute_indices.cpu()[1:])]
+                            for gt_ids_multiple in y_multiple_ids_split:
+                                if gt_ids_multiple.size(0) > 0:
+                                    gt_precursors = [[precursor_lookup[idx.item()] for idx in gt_id_set] for gt_id_set in gt_ids_multiple]
+                                else:
+                                    gt_precursors = [precursor_lookup[idx.item()] for idx in gt_ids_multiple]
+
+                            # Create list of dictionaries for each batch element
+                            batch_results = []
+                            for i in range(len(batch[0].y_string_label)):
+
+                                result_dict = {
+                                    batch[0].y_string_label[i]: {
+                                        'gt_precursors': gt_precursors,
+                                        'sorted_candidates': [precursor_lookup[idx] for idx in sorted_indices_np[i]],
+                                        'sorted_probabilities': sorted_probs_np[i].tolist()
+                                    }
+                                }
+                                batch_results.append(result_dict)
+                            
+                            results_list_of_dics.extend(batch_results)
                             
                             # Save model at early stopping
-                            save_path = f'checkpoints/RR/{args.difficulty}/early_stopping_epoch{best_epoch}_top5_acc_{multi_top_5_acc:.4f}.pt'
+                            save_path = f'checkpoints/RR/{args.difficulty}/early_stopping_epoch{best_epoch}_top5_acc_{multi_top_5_acc:.4f}_{args.seed}.pt'
+                            save_path_results = f'checkpoints/RR/{args.difficulty}/early_stopping_epoch{best_epoch}_results_{args.seed}.json'
                             torch.save({
                                 'epoch': best_epoch,
                                 'args': args,
                                 'model_state_dict': model.state_dict(),
+                                'optimizer_state_dict': optimizer.state_dict(),
                                 'top1_acc': multi_top_1_acc,
                                 'top3_acc': multi_top_3_acc, 
                                 'top5_acc': multi_top_5_acc,
@@ -262,10 +295,12 @@ def main():
                                 'micro_recall': test_micro,
                                 'macro_recall': test_macro
                             }, save_path)
+                            with open(save_path_results, 'w') as f:
+                                json.dump(results_list_of_dics, f, indent=4)
                             print(f'Model and metrics saved to {save_path}')                           
                             sys.exit()
 
-                    # Save model at regular intervals
+        # Save model at regular intervals
         if (epoch + 1) % args.save_interval == 0:
             model.eval()
             multi_val_top_1_list = []
@@ -287,8 +322,6 @@ def main():
                     template_output = model(batch)
 
                     assert batch[0].y_multiple_len.sum().item() == batch[0].y_multiple.size(0)
-                                                
-                    ###############################################################################################################
 
                     absolute_indices = torch.cat([torch.tensor([0]).to(device), torch.cumsum(batch[0].y_multiple_len, dim=0)])
                     split_tensors = [batch[0].y_multiple[start:end] for start, end in zip(absolute_indices[:-1], absolute_indices[1:])]
@@ -354,11 +387,13 @@ def main():
                 print(f'\n Test Recall | Epoch: {epoch+1} | Micro_Recall: {test_micro:.4f} | Macro_Recall: {test_macro:.4f} ')
 
 
-            interval_save_path = f'checkpoints/RR/{args.difficulty}/epoch{epoch+1}_top5_acc_{multi_top_5_acc:.4f}.pt'
+            interval_save_path = f'checkpoints/RR/{args.difficulty}/epoch{epoch+1}_top5_acc_{multi_top_5_acc:.4f}_{args.seed}.pt'
+            interval_save_path_results = f'checkpoints/RR/{args.difficulty}/epoch{epoch+1}_results_{args.seed}.json'
             torch.save({
                 'epoch': epoch + 1,
                 'args': args,
                 'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
                 'top1_acc': multi_top_1_acc,
                 'top3_acc': multi_top_3_acc,
                 'top5_acc': multi_top_5_acc, 
@@ -366,6 +401,8 @@ def main():
                 'micro_recall': test_micro,
                 'macro_recall': test_macro
             }, interval_save_path)
+            with open(interval_save_path_results, 'w') as f:
+                json.dump(results_list_of_dics, f, indent=4)
             print(f'Model and metrics saved to {interval_save_path}')
 
 
