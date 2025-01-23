@@ -267,7 +267,7 @@ def main():
                             sorted_indices_np = sorted_indices.cpu().numpy()
 
                             # Get ground truth precursor indices for each batch element
-                            gt_ids = batch[0].y_multiple.nonzero(as_tuple=True)[:, 1].cpu().numpy()
+                            gt_ids = batch[0].y_multiple.nonzero(as_tuple=False)[:, 1].cpu().numpy()
 
                             # Create list of dictionaries for each batch element
                             batch_results = []
@@ -355,7 +355,7 @@ def main():
                     sorted_indices_np = sorted_indices.cpu().numpy()
 
                     # Get ground truth precursor indices for each batch element
-                    gt_ids = batch[0].y_multiple.nonzero(as_tuple=True)[:, 1].cpu().numpy()
+                    gt_ids = batch[0].y_multiple.nonzero(as_tuple=False)[:, 1].cpu().numpy()
 
                     # Create list of dictionaries for each batch element
                     batch_results = []
