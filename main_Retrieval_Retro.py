@@ -314,7 +314,7 @@ def main():
             ###############################################################################################################
 
             results_list_of_dics = []
-            precursor_lookup = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our/{args.difficulty}/precursor_lookup.pt',map_location=device)
+            precursor_lookup = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/precursor_lookup.pt',map_location=device)
 
             with torch.no_grad():
                 for bc, batch in enumerate(test_loader):
