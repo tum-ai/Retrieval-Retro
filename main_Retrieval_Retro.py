@@ -202,15 +202,13 @@ def main():
                 print(f'\n Valid_multi | Epoch: {epoch+1} | Top-1 ACC: {multi_val_top_1_acc:.4f} | Top-3 ACC: {multi_val_top_3_acc:.4f} | Top-5 ACC: {multi_val_top_5_acc:.4f} | Top-10 ACC: {multi_val_top_10_acc:.4f} ')
                 print(f'\n Valid Recall | Epoch: {epoch+1} | Micro_Recall: {val_micro:.4f} | Macro_Recall: {val_macro:.4f} ')
 
+                if (epoch + 1) % args.save_interval == 0 and multi_val_top_5_acc > best_save_acc:
+                    best_save_acc = multi_val_top_5_acc
+                    best_save_epoch = epoch + 1
+                    checkpoint = True
+                    results_list_of_dics = []
 
-                if multi_val_top_5_acc > best_acc:
-                    
-                    if (epoch + 1) % args.save_interval == 0 and multi_val_top_5_acc > best_save_acc:
-                        best_save_acc = multi_val_top_5_acc
-                        best_save_epoch = epoch + 1
-                        checkpoint = True
-                        results_list_of_dics = []
-
+                if multi_val_top_5_acc > best_acc or checkpoint:
 
                     best_acc = multi_val_top_5_acc
                     best_epoch = epoch + 1
@@ -293,8 +291,8 @@ def main():
                         os.makedirs(save_dir, exist_ok=True)
 
                         # Fixed checkpoint paths that will be reused
-                        checkpoint_path = f'{save_dir}/best_model_{args.seed}.pt'
-                        results_path = f'{save_dir}/best_results_{args.seed}.json'
+                        checkpoint_path = f'{save_dir}/RR_{args.difficulty}_best_model_{args.seed}.pt'
+                        results_path = f'{save_dir}/RR_{args.difficulty}_best_results_{args.seed}.json'
 
                         # Only save if current accuracy is better than previous best
                         if multi_top_5_acc > best_save_acc:
@@ -376,8 +374,8 @@ def main():
                             save_dir = f'checkpoints/RR/{args.difficulty}'
                             os.makedirs(save_dir, exist_ok=True)
 
-                            save_path = f'{save_dir}/early_stopping_epoch{best_epoch}_top5_acc_{multi_top_5_acc:.4f}_{args.seed}.pt'
-                            save_path_results = f'{save_dir}/early_stopping_epoch{best_epoch}_results_{args.seed}.json'
+                            save_path = f'{save_dir}/RR_{args.difficulty}_early_stopping_epoch{best_epoch}_top5_acc_{multi_top_5_acc:.4f}_{args.seed}.pt'
+                            save_path_results = f'{save_dir}/RR_{args.difficulty}_early_stopping_epoch{best_epoch}_results_{args.seed}.json'
                             torch.save({
                                 'epoch': best_epoch,
                                 'args': args,
