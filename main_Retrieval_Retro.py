@@ -109,8 +109,9 @@ def main():
         checkpoint = torch.load(args.checkpoint_path)
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        start_epoch = checkpoint['epoch']
         print(f"Loaded model and optimizer checkpoint from {args.checkpoint_path}")
-        print(f"Epoch: {checkpoint['epoch']}")
+        print(f"Resuming from epoch {start_epoch}")
         print(f"Top-1 ACC: {checkpoint['top1_acc']:.4f}")
         print(f"Top-3 ACC: {checkpoint['top3_acc']:.4f}")
         print(f"Top-5 ACC: {checkpoint['top5_acc']:.4f}")
@@ -119,6 +120,7 @@ def main():
         print(f"Macro Recall: {checkpoint['macro_recall']:.4f}")
     else:
         print("No checkpoint path provided")
+        start_epoch = 0
 
     bce_loss = nn.BCELoss()
 
@@ -131,7 +133,7 @@ def main():
     test_macro = 0
     test_micro = 0
     best_acc_list = []
-    for epoch in range(args.epochs):
+    for epoch in range(start_epoch, args.epochs):
         train_loss = 0
         model.train()
         for bc, batch in enumerate(train_loader):
