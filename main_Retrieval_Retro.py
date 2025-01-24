@@ -129,7 +129,7 @@ def main():
     best_acc = 0
     best_epoch = 0
     best_save_epoch = 0
-    best_save_acc = 0
+    best_save_acc = -1
     test_macro = 0
     test_micro = 0
     best_acc_list = []
@@ -203,12 +203,14 @@ def main():
                 print(f'\n Valid Recall | Epoch: {epoch+1} | Micro_Recall: {val_micro:.4f} | Macro_Recall: {val_macro:.4f} ')
 
                 if (epoch + 1) % args.save_interval == 0 and multi_val_top_5_acc > best_save_acc:
+                    print(f"\nCheckpoint triggered - New best validation accuracy: {multi_val_top_5_acc:.4f} (previous: {best_save_acc:.4f})")
                     best_save_acc = multi_val_top_5_acc
                     best_save_epoch = epoch + 1
                     checkpoint = True
                     results_list_of_dics = []
 
                 if multi_val_top_5_acc > best_acc or checkpoint:
+                    print(f"\nEvaluating on test set - {'New best accuracy' if multi_val_top_5_acc > best_acc else 'Checkpoint triggered'}")
 
                     best_acc = multi_val_top_5_acc
                     best_epoch = epoch + 1
@@ -294,24 +296,23 @@ def main():
                         checkpoint_path = f'{save_dir}/RR_{args.difficulty}_best_model_{args.seed}.pt'
                         results_path = f'{save_dir}/RR_{args.difficulty}_best_results_{args.seed}.json'
 
-                        # Only save if current accuracy is better than previous best
-                        if multi_top_5_acc > best_save_acc:
-                            best_save_acc = multi_top_5_acc
-                            torch.save({
-                                'epoch': epoch + 1,
-                                'args': args,
-                                'model_state_dict': model.state_dict(),
-                                'optimizer_state_dict': optimizer.state_dict(),
-                                'top1_acc': multi_top_1_acc,
-                                'top3_acc': multi_top_3_acc,
-                                'top5_acc': multi_top_5_acc,
-                                'top10_acc': multi_top_10_acc,
-                                'micro_recall': test_micro,
-                                'macro_recall': test_macro
-                            }, checkpoint_path)
-                            with open(results_path, 'w') as f:
-                                json.dump(results_list_of_dics, f, indent=4)
-                            print(f'New best model saved to {checkpoint_path} (Top-5 ACC: {multi_top_5_acc:.4f})')
+                        print(f"\nSaving new best model (Top-5 ACC improved: {best_save_acc:.4f} -> {multi_top_5_acc:.4f})")
+                        best_save_acc = multi_top_5_acc
+                        torch.save({
+                            'epoch': epoch + 1,
+                            'args': args,
+                            'model_state_dict': model.state_dict(),
+                            'optimizer_state_dict': optimizer.state_dict(),
+                            'top1_acc': multi_top_1_acc,
+                            'top3_acc': multi_top_3_acc,
+                            'top5_acc': multi_top_5_acc,
+                            'top10_acc': multi_top_10_acc,
+                            'micro_recall': test_micro,
+                            'macro_recall': test_macro
+                        }, checkpoint_path)
+                        with open(results_path, 'w') as f:
+                            json.dump(results_list_of_dics, f, indent=4)
+                        print(f'New best model saved to {checkpoint_path} (Top-5 ACC: {multi_top_5_acc:.4f})')
                         checkpoint = False
 
                     best_acc_list.append(multi_top_5_acc)
