@@ -65,8 +65,6 @@ def main():
     print(device)
     seed_everything(seed=args.seed)
 
-    args.save_interval = 1
-    args.eval = 5
     args.retrieval = 'ours'
     args.split = 'year'
 
