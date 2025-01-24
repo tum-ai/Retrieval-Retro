@@ -1,9 +1,7 @@
 #!/bin/bash
 
-# Run main_Retrieval_Retro.py with 5 different seeds and redirect output to log files
-python main_Retrieval_Retro.py --seed 42 > run_seed42.log 2>&1
-python main_Retrieval_Retro.py --seed 123 > run_seed123.log 2>&1
-python main_Retrieval_Retro.py --seed 456 > run_seed456.log 2>&1
-python main_Retrieval_Retro.py --seed 789 > run_seed789.log 2>&1
-python main_Retrieval_Retro.py --seed 999 > run_seed999.log 2>&1
+# Run main_Retrieval_Retro.py with 3 different difficulties using nohup for background processes
+nohup python main_Retrieval_Retro.py --seed 42 --difficulty easy > run_easy_seed42.log 2>&1 &
+nohup python main_Retrieval_Retro.py --seed 42 --difficulty medium > run_medium_seed42.log 2>&1 &
+nohup python main_Retrieval_Retro.py --seed 42 --difficulty hard > run_hard_seed42.log 2>&1 &
 
