@@ -1,5 +1,6 @@
 #!/bin/bash
 
+conda activate retrieval-retro
 # Run main_Retrieval_Retro.py with 3 different difficulties using nohup for background processes
 mkdir -p logs
 nohup python main_Retrieval_Retro.py --seed 42 --difficulty easy --checkpoint_path checkpoints/RR/easy/epoch100_top5_acc_0.6762_42.pt >> logs/run_easy_seed42.log 2>&1 &
