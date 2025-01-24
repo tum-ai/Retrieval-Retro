@@ -68,14 +68,10 @@ def main():
     args.retrieval = 'ours'
     args.split = 'year'
 
-    # Load datasets in parallel using multiple threads
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [
-            executor.submit(torch.load, f'./dataset/our/{args.difficulty}/year_train_final_mpc_nre_K_3.pt', map_location=device),
-            executor.submit(torch.load, f'./dataset/our/{args.difficulty}/year_valid_final_mpc_nre_K_3.pt', map_location=device), 
-            executor.submit(torch.load, f'./dataset/our/{args.difficulty}/year_test_final_mpc_nre_K_3.pt', map_location=device)
-        ]
-        train_dataset, valid_dataset, test_dataset = [f.result() for f in futures]
+    # Load datasets sequentially
+    train_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_train_final_mpc_nre_K_3.pt', map_location=device)
+    valid_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_valid_final_mpc_nre_K_3.pt', map_location=device)
+    test_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_test_final_mpc_nre_K_3.pt', map_location=device)
 
     train_loader = DataLoader(train_dataset, batch_size = args.batch_size, shuffle=True, collate_fn = custom_collate_fn)
     valid_loader = DataLoader(valid_dataset, batch_size = 1, collate_fn = custom_collate_fn)
