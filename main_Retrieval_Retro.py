@@ -133,6 +133,8 @@ def main():
     test_macro = 0
     test_micro = 0
     best_acc_list = []
+    results_list_of_dics = []
+    checkpoint = False
     for epoch in range(start_epoch, args.epochs):
         train_loss = 0
         model.train()
