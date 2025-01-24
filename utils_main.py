@@ -99,7 +99,7 @@ def top_k_acc_multiple(y_true_matrix, y_pred_prob, k):
 def parse_args():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--device", '-d', type=int, default=1, help="GPU to use")
+    parser.add_argument("--device", '-d', type=int, default=0, help="GPU to use")
     parser.add_argument("--lr", type=float, default=0.0001, help="Learning Rate")
     parser.add_argument("--epochs", type=int, default=1000, help="Number of Epochs for training")
     parser.add_argument("--batch_size", type=int, default=128, help="Batch Size") 
