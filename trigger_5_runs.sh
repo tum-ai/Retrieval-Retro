@@ -1,5 +1,5 @@
 #!/bin/bash
-
+conda init
 conda activate retrieval-retro
 # Run main_Retrieval_Retro.py with 3 different difficulties using nohup for background processes
 mkdir -p logs
