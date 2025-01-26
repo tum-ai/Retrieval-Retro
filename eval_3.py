@@ -188,11 +188,11 @@ if __name__ == "__main__":
         res_i = {}
 
         # Ground-truth precursors
-        gt_precursors = [Composition(x) for x in item[target_mat]["gt_precursors"]][:30]
+        gt_precursors = [Composition(x) for x in item[target_mat]["gt_precursors"][:30]]
         dict_gt_precursors = [x.formula.replace(' ', '') for x in gt_precursors]
 
         # Candidate compositions and probabilities
-        candidates = [Composition(x) for x in item[target_mat]["sorted_candidates"]][:30]
+        candidates = [Composition(x) for x in item[target_mat]["sorted_candidates"][:30]]
         probabilities = item[target_mat]["sorted_probabilities"][:30]
 
         # Filter candidates based on probability threshold
