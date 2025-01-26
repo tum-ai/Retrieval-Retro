@@ -60,9 +60,9 @@ def main():
     print(device)
     seed_everything(seed=args.seed)
 
-    nre_train = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_train_nre_retrieved_{K}_naive.json'
-    nre_valid = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_valid_nre_retrieved_{K}_naive.json'
-    nre_test = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_test_nre_retrieved_{K}_naive.json'
+    nre_train = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_train_nre_retrieved_{K}_{args.difficulty}_naive.json'
+    nre_valid = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_valid_nre_retrieved_{K}_{args.difficulty}_naive.json'
+    nre_test = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_test_nre_retrieved_{K}_{args.difficulty}_naive.json'
 
     with open(nre_train, 'r') as f:
         reaction_train = json.load(f)
