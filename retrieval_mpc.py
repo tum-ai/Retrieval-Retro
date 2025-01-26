@@ -30,9 +30,9 @@ def make_sim_mpc(device, difficulty):
     diag_mask = torch.ones_like(cos_sim_train).to(device) - torch.eye(cos_sim_train.size(0), dtype=torch.float32).to(device)
     cos_sim_train= cos_sim_train * diag_mask
 
-    torch.save(cos_sim_train, f"./dataset/our_mpc/{difficulty}/train_year_mpc_cos_sim_matrix.pt")
-    torch.save(cos_sim_valid, f"./dataset/our_mpc/{difficulty}/valid_year_mpc_cos_sim_matrix.pt")
-    torch.save(cos_sim_test, f"./dataset/our_mpc/{difficulty}/test_year_mpc_cos_sim_matrix.pt")
+    torch.save(cos_sim_train, f"./dataset/our_mpc/{difficulty}/train_year_mpc_cos_sim_matrix_naive.pt")
+    torch.save(cos_sim_valid, f"./dataset/our_mpc/{difficulty}/valid_year_mpc_cos_sim_matrix_naive.pt")
+    torch.save(cos_sim_test, f"./dataset/our_mpc/{difficulty}/test_year_mpc_cos_sim_matrix_naive.pt")
 
     print(f'cosine similarity matrix mpc saving completed')
 
@@ -57,7 +57,7 @@ def compute_rank_in_batches(tensor, batch_size, difficulty):
 
 def make_retrieved(mode,rank_matrix, k, difficulty):
      
-    save_path = f'./dataset/our_mpc/{difficulty}/year_{mode}_mpc_retrieved_{k}'
+    save_path = f'./dataset/our_mpc/{difficulty}/year_{mode}_mpc_retrieved_{k}_naive.json'
 
     candidate_list = defaultdict(list)
 
@@ -129,15 +129,20 @@ def main():
         torch.cuda.set_device(device)
 
     # Extract embeddings first
-    model_path = "/home/thorben/code/mit/Retrieval-Retro/checkpoints/mpc/early_stop_model_epoch_290_0.0005_our_data_hard.pt"
+    if args.difficulty == 'easy':
+        model_path = "/home/thorben/code/mit/Retrieval-Retro/checkpoints/mpc/early_stop_model_epoch_205_0.0005_our_data_easy_seed_0.pt"
+    elif args.difficulty == 'medium':
+        model_path = "/home/thorben/code/mit/Retrieval-Retro/checkpoints/mpc/early_stop_model_epoch_275_0.0005_our_data_medium_seed_0.pt"
+    elif args.difficulty == 'hard':
+        model_path = "/home/thorben/code/mit/Retrieval-Retro/checkpoints/mpc/early_stop_model_epoch_290_0.0005_our_data_hard_seed_0.pt"
     embeddings = extract_embeddings(model_path, device, args.difficulty)
     
     # Then continue with similarity computation
     make_sim_mpc(device, args.difficulty)
 
-    yr_mpc_train = torch.load(f"./dataset/our_mpc/{args.difficulty}/train_year_mpc_cos_sim_matrix.pt", map_location=device)
-    yr_mpc_valid = torch.load(f"./dataset/our_mpc/{args.difficulty}/valid_year_mpc_cos_sim_matrix.pt", map_location=device)
-    yr_mpc_test = torch.load(f"./dataset/our_mpc/{args.difficulty}/test_year_mpc_cos_sim_matrix.pt", map_location=device)
+    yr_mpc_train = torch.load(f"./dataset/our_mpc/{args.difficulty}/train_year_mpc_cos_sim_matrix_naive.pt", map_location=device)
+    yr_mpc_valid = torch.load(f"./dataset/our_mpc/{args.difficulty}/valid_year_mpc_cos_sim_matrix_naive.pt", map_location=device)
+    yr_mpc_test = torch.load(f"./dataset/our_mpc/{args.difficulty}/test_year_mpc_cos_sim_matrix_naive.pt", map_location=device)
 
     batch_size = 1000
     rank_mpc_train = compute_rank_in_batches(yr_mpc_train, batch_size, args.difficulty)

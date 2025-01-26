@@ -16,8 +16,8 @@ def main(mode, K):
     valid_dataset = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/mit_impact_dataset_val.pt')
     test_dataset = torch.load(f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/mit_impact_dataset_test.pt')
 
-    save_path = f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/year_{mode}_mpc_retrieved_{K}'
-    save_path_2 = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_{mode}_nre_final_retrieved_{K}'
+    save_path = f'/home/thorben/code/mit/Retrieval-Retro/dataset/our_mpc/{args.difficulty}/year_{mode}_mpc_retrieved_{K}_naive.json'
+    save_path_2 = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_{mode}_nre_final_retrieved_{K}_naive.json'
 
     with open(save_path, "r") as f:
         candi_data = json.load(f)
@@ -71,7 +71,7 @@ def main(mode, K):
         new_data.append(tuple(tmp))
 
 
-    torch.save(new_data, f"/home/thorben/code/mit/Retrieval-Retro/dataset/our/{args.difficulty}/year_{mode}_final_mpc_nre_K_{K}.pt")
+    torch.save(new_data, f"/home/thorben/code/mit/Retrieval-Retro/dataset/our/{args.difficulty}/year_{mode}_final_mpc_nre_K_{K}_naive.pt")
 
 if __name__ == "__main__":
     from tqdm import tqdm
