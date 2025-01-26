@@ -69,9 +69,9 @@ def main():
     args.split = 'year'
 
     # Load datasets sequentially
-    train_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_train_final_mpc_nre_K_3.pt', map_location=device)
-    valid_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_valid_final_mpc_nre_K_3.pt', map_location=device)
-    test_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_test_final_mpc_nre_K_3.pt', map_location=device)
+    train_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_train_final_mpc_nre_K_3_naive.pt', map_location=device)
+    valid_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_valid_final_mpc_nre_K_3_naive.pt', map_location=device)
+    test_dataset = torch.load(f'./dataset/our/{args.difficulty}/year_test_final_mpc_nre_K_3_naive.pt', map_location=device)
 
     train_loader = DataLoader(train_dataset, batch_size = args.batch_size, shuffle=True, collate_fn = custom_collate_fn)
     valid_loader = DataLoader(valid_dataset, batch_size = 1, collate_fn = custom_collate_fn)
@@ -94,7 +94,7 @@ def main():
     t_layers_sa = args.t_layers_sa
     thres = 'normal'
 
-    f = open(f"./experiments/Retrieval_Retro_{args.difficulty}_{args.batch_size}_{args.lr}_{args.seed}_result.txt", "a")
+    f = open(f"./experiments/Retrieval_Retro_{args.difficulty}_{args.batch_size}_{args.lr}_{args.seed}_result_naive.txt", "a")
 
     if embedder == 'Retrieval_Retro': 
         model = Retrieval_Retro(gnn, layers, input_dim, output_dim, hidden_dim, n_bond_feat, device, t_layers, t_layers_sa, num_heads).to(device)
@@ -289,12 +289,12 @@ def main():
 
                     if checkpoint:
                         # Create directories if they don't exist
-                        save_dir = f'checkpoints/RR/{args.difficulty}'
+                        save_dir = f'checkpoints/RR/{args.difficulty}_naive'
                         os.makedirs(save_dir, exist_ok=True)
 
                         # Fixed checkpoint paths that will be reused
-                        checkpoint_path = f'{save_dir}/RR_{args.difficulty}_best_model_{args.seed}.pt'
-                        results_path = f'{save_dir}/RR_{args.difficulty}_best_results_{args.seed}.json'
+                        checkpoint_path = f'{save_dir}/RR_{args.difficulty}_best_model_{args.seed}_naive.pt'
+                        results_path = f'{save_dir}/RR_{args.difficulty}_best_results_{args.seed}_naive.json'
 
                         print(f"\nSaving new best model (Top-5 ACC improved: {best_save_acc:.4f} -> {multi_top_5_acc:.4f})")
                         best_save_acc = multi_top_5_acc
@@ -372,11 +372,11 @@ def main():
                                 results_list_of_dics.extend(batch_results)
                             
                             # Save model at early stopping
-                            save_dir = f'checkpoints/RR/{args.difficulty}'
+                            save_dir = f'checkpoints/RR/{args.difficulty}_naive'
                             os.makedirs(save_dir, exist_ok=True)
 
-                            save_path = f'{save_dir}/RR_{args.difficulty}_early_stopping_epoch{best_epoch}_top5_acc_{multi_top_5_acc:.4f}_{args.seed}.pt'
-                            save_path_results = f'{save_dir}/RR_{args.difficulty}_early_stopping_epoch{best_epoch}_results_{args.seed}.json'
+                            save_path = f'{save_dir}/RR_{args.difficulty}_early_stopping_epoch{best_epoch}_top5_acc_{multi_top_5_acc:.4f}_{args.seed}_naive.pt'
+                            save_path_results = f'{save_dir}/RR_{args.difficulty}_early_stopping_epoch{best_epoch}_results_{args.seed}_naive.json'
                             torch.save({
                                 'epoch': best_epoch,
                                 'args': args,
