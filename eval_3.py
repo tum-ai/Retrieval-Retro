@@ -3,6 +3,7 @@ import json
 import itertools
 import heapq
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 from pymatgen.core import Composition
 import datetime
@@ -162,7 +163,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate precursor candidates for target compositions.")
     
     # Input and output paths
-    parser.add_argument("--input", default="/home/thorben/code/mit/PrecursorRanker/evaluation/single_ranks_results_test_2025-01-23_00:05:06.json",help="Path to the input JSON file containing target compositions and candidates.")
+    parser.add_argument("--input", default="results/hard/RR_hard_best_results_777_updated_only_50.json",help="Path to the input JSON file containing target compositions and candidates.")
     parser.add_argument("--output", default="results.pkl", help="Path to save the evaluation results (pickle format).")
     parser.add_argument("--log", default="evaluation_log.txt", help="Path to save the evaluation log.")
 
@@ -188,7 +189,7 @@ if __name__ == "__main__":
         res_i = {}
 
         # Ground-truth precursors
-        gt_precursors = [Composition(x) for x in item[target_mat]["gt_precursors"][:30]]
+        gt_precursors = [Composition(x) for x in item[target_mat]["gt_precursors"]]
         dict_gt_precursors = [x.formula.replace(' ', '') for x in gt_precursors]
 
         # Candidate compositions and probabilities
