@@ -57,6 +57,8 @@ def main(mode, K):
             subgraph.append(candi_graph)
 
         for i in candi_idx_2:
+            if type(i) is not int:
+                i = int(i)
             x = train_dataset[i].x
             edge_index = train_dataset[i].edge_index
             fc_weight = train_dataset[i].fc_weight

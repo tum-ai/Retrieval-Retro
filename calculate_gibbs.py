@@ -181,9 +181,26 @@ def main():
         precursor_differences = data - train_energies
         valid_idx.append(precursor_differences)
 
+    # Process valid in chunks
+    chunk_size = 5
+    num_chunks = (len(valid_formation_y) + chunk_size - 1) // chunk_size
+    valid_matrix = None
+    # Process chunks
+    for i in tqdm(range(num_chunks)):
+        start_idx = i * chunk_size
+        end_idx = min((i + 1) * chunk_size, len(valid_idx))
+        chunk = torch.cat(valid_idx[start_idx:end_idx], dim=0)
+        # Add diagonal elements only for this chunk
+        diag_mask = torch.zeros(end_idx - start_idx, len(train_dataset), device=device)
+        for j in range(end_idx - start_idx):
+            if start_idx + j < len(train_dataset):
+                diag_mask[j, start_idx + j] = 100000
+        chunk = chunk + diag_mask
+        if valid_matrix is None:
+            valid_matrix = chunk
+        else:
+            valid_matrix = torch.cat((valid_matrix, chunk), dim=0)
 
-    # Stack the differences and add a large value to the diagonal
-    valid_matrix = torch.stack(valid_idx) 
     torch.save(valid_matrix, f'./dataset/nre/{args.difficulty}/optimized_{args.split}_valid_formation_energy_calculation_delta_G_naive.pt')
     make_retrieved('valid','year', valid_matrix, K, 0, args.difficulty)
 
@@ -193,7 +210,27 @@ def main():
     # Compute formation energy differences
     for data in tqdm(test_formation_y):
         precursor_differences = data - train_energies
-        test_idx.append(precursor_differences)  
+        test_idx.append(precursor_differences)
+
+    # Process test in chunks
+    chunk_size = 5
+    num_chunks = (len(test_formation_y) + chunk_size - 1) // chunk_size
+    test_matrix = None
+    # Process chunks  
+    for i in tqdm(range(num_chunks)):
+        start_idx = i * chunk_size
+        end_idx = min((i + 1) * chunk_size, len(test_idx))
+        chunk = torch.cat(test_idx[start_idx:end_idx], dim=0)
+        # Add diagonal elements only for this chunk
+        diag_mask = torch.zeros(end_idx - start_idx, len(train_dataset), device=device)
+        for j in range(end_idx - start_idx):
+            if start_idx + j < len(train_dataset):
+                diag_mask[j, start_idx + j] = 100000
+        chunk = chunk + diag_mask
+        if test_matrix is None:
+            test_matrix = chunk
+        else:
+            test_matrix = torch.cat((test_matrix, chunk), dim=0)
 
     # Stack the differences and add a large value to the diagonal
     test_matrix = torch.stack(test_idx) 

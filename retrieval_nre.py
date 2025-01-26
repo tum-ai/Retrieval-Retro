@@ -104,7 +104,7 @@ def main():
 
         reaction_mpc_train[idx] = reaction[:K]
     
-    save_path = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_train_nre_final_retrieved_{K}_naive.json'
+    save_path = f'/home/thorben/code/mit/Retrieval-Retro/dataset/nre/{args.difficulty}/year_train_nre_final_retrieved_{K}_naive.json'   
     with open(save_path, 'w') as f:
         json.dump(reaction_mpc_train, f)
 
