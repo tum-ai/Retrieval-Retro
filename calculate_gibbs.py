@@ -147,7 +147,7 @@ def main():
     train_idx = []
     # Compute formation energy differences
     for data in tqdm(train_formation_y):
-        precursor_differences = train_energies - data
+        precursor_differences = data - train_energies   
         train_idx.append(precursor_differences)
 
     # Process in chunks of 500 to save memory
